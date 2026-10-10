@@ -480,7 +480,7 @@
         };
       },
     },
-    template: `<div class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout]" :style="style">
+    template: `<div class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout, { 'schedule-event--long': lesson.minutes > 60 }]" :style="style">
       <span class="schedule-event__title small-strong">{{ title }}</span>
       <span class="schedule-event__status small">
         <pm-icon :name="status.icon" size="s"></pm-icon>

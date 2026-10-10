@@ -1081,7 +1081,10 @@
   padding: var(--space-8) var(--space-12);
 }
 
-/* Планшет: колонки узкие, в событии только время начала и иконка статуса */
+/* Планшет: колонки узкие, в событии только время начала и иконка статуса. Название не возвращается
+   даже в длинном уроке: в колонке 97 px от «English Individual» остаётся «English I…», а полное имя
+   уже в заголовке карточки. У урока дольше часа (`--long`) содержимое прижато к верху, к началу урока,
+   как в Google Calendar и Apple Calendar, а не висит посередине блока */
 @media (min-width: 768px) and (max-width: 1199px) {
   .schedule-event--grid {
     justify-content: center;
@@ -1092,6 +1095,10 @@
   .schedule-event--grid .schedule-event__title,
   .schedule-event--grid .schedule-event__end {
     display: none;
+  }
+
+  .schedule-event--grid.schedule-event--long {
+    justify-content: flex-start;
   }
 }
 
