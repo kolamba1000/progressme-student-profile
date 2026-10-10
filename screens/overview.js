@@ -131,10 +131,11 @@ window.ScreenOverview = (function () {
       decideCollapse() { this.collapseOnVisit = this.shownSignals.length > VISIBLE_SIGNALS + 1; },
       signalTone(signal) { return signal.id === this.firstActiveId ? signal.tone : 'neutral'; },
       menuOf(signal) { return (signal.menu || []).concat([HIDE_ITEM]); },
-      // «Показать ещё» раскрывает весь раздел, вместе с «Ждут ответа»; «Свернуть» сворачивает обе части
+      // «Показать ещё» раскрывает весь раздел, вместе с «Ждут ответа». «Свернуть» сворачивает только основной список:
+      // ссылка стоит над группой и по месту относится к тому, что выше; группу закрывает её собственная строка
       toggleSignals() {
         this.st.signalsExpanded = !this.st.signalsExpanded;
-        this.st.waitingExpanded = this.st.signalsExpanded;
+        if (this.st.signalsExpanded) this.st.waitingExpanded = true;
       },
       // «Напомнить»: метка на месте кнопки, счётчик сразу меньше; через паузу строка складывается и переезжает в «Ждут ответа»
       onSignalAction(signal) {
