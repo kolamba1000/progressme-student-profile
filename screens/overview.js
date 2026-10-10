@@ -78,7 +78,7 @@ window.ScreenOverview = (function () {
           return this.signalsCollapsible && !this.st.signalsExpanded && index >= VISIBLE_SIGNALS;
         };
       },
-      // Группа «Ждут ответа» свёрнута в строку-заголовок: строки видны после нажатия на неё или при «Показать ещё»
+      // Группа «Ждут ответа» свёрнута в строку-заголовок: строки видны только после нажатия на неё
       isWaitingCollapsed() { return (signal) => !this.st.waitingExpanded || (!!this.st.removed[signal.id] && signal.id !== this.anchorWaiting); },
       hiddenCount() { return this.shownSignals.length - VISIBLE_SIGNALS; },
       attentionTitle() { return F.typo('Требует внимания · ' + this.activeCount); },
@@ -131,12 +131,9 @@ window.ScreenOverview = (function () {
       decideCollapse() { this.collapseOnVisit = this.shownSignals.length > VISIBLE_SIGNALS + 1; },
       signalTone(signal) { return signal.id === this.firstActiveId ? signal.tone : 'neutral'; },
       menuOf(signal) { return (signal.menu || []).concat([HIDE_ITEM]); },
-      // «Показать ещё» раскрывает весь раздел, вместе с «Ждут ответа». «Свернуть» сворачивает только основной список:
-      // ссылка стоит над группой и по месту относится к тому, что выше; группу закрывает её собственная строка
-      toggleSignals() {
-        this.st.signalsExpanded = !this.st.signalsExpanded;
-        if (this.st.signalsExpanded) this.st.waitingExpanded = true;
-      },
+      // «Показать ещё» и «Свернуть» управляют только основным списком: ссылка стоит над группой и по месту относится
+      // к тому, что выше. Группу «Ждут ответа» открывает и закрывает её собственная строка
+      toggleSignals() { this.st.signalsExpanded = !this.st.signalsExpanded; },
       // «Напомнить»: метка на месте кнопки, счётчик сразу меньше; через паузу строка складывается и переезжает в «Ждут ответа»
       onSignalAction(signal) {
         if (signal.action.kind !== 'remind') { this.$emit('out-of-scope'); return; }
