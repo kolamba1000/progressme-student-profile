@@ -29,7 +29,9 @@ window.ScreenClass = (function () {
       st() { return this.state; },
       cls() { return this.st.classes.find((c) => c.id === this.classId); },
       schedule() { return this.st.schedule; },
-      weekLabel() { return F.weekLabel(this.schedule.weekStart, this.schedule.offset); },
+      // Понедельник 00:00 в выбранном поясе: при смене пояса колонки не съезжают на день
+      weekStart() { return F.weekStart(this.st.now, this.schedule.offset) + this.schedule.weekShift * 7 * F.DAY; },
+      weekLabel() { return F.weekLabel(this.weekStart, this.schedule.offset); },
       lessons() { return this.st.lessons.filter((l) => l.classId === this.classId); },
       timezoneOptions() {
         return this.st.timezones.map((tz) => ({ value: tz.offset, label: F.timezoneLabel(tz, this.clockNow) }));
@@ -44,7 +46,7 @@ window.ScreenClass = (function () {
         const realDayStart = F.parts(Date.now(), this.st.offset).dayStart;
         this.clockNow = demoDayStart + (Date.now() - realDayStart);
       },
-      shiftWeek(days) { this.schedule.weekStart += days * F.DAY; },
+      shiftWeek(weeks) { this.schedule.weekShift += weeks; },
       titleOf() { return this.cls.name; },
     },
     template: `<div class="class-screen">
@@ -61,11 +63,11 @@ window.ScreenClass = (function () {
         <pm-class-header :cls="cls" @out-of-scope="$emit('out-of-scope')"></pm-class-header>
         <pm-card-header title="Расписание уроков" divider></pm-card-header>
         <div class="card-schedule__toolbar">
-          <pm-week-switcher :label="weekLabel" @prev="shiftWeek(-7)" @next="shiftWeek(7)"></pm-week-switcher>
+          <pm-week-switcher :label="weekLabel" @prev="shiftWeek(-1)" @next="shiftWeek(1)"></pm-week-switcher>
           <pm-select class="card-schedule__timezone" v-model="schedule.offset" :options="timezoneOptions" icon="globe" label="Часовой пояс расписания"></pm-select>
         </div>
-        <pm-schedule-week v-if="!isMobile" class="card-schedule__week" :lessons="lessons" :week-start="schedule.weekStart" :now="clockNow" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-week>
-        <pm-schedule-day-list v-else class="card-schedule__list" :lessons="lessons" :week-start="schedule.weekStart" :now="clockNow" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-day-list>
+        <pm-schedule-week v-if="!isMobile" class="card-schedule__week" :lessons="lessons" :week-start="weekStart" :now="clockNow" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-week>
+        <pm-schedule-day-list v-else class="card-schedule__list" :lessons="lessons" :week-start="weekStart" :now="clockNow" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-day-list>
       </pm-card>
     </div>`,
   };

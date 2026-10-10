@@ -75,7 +75,7 @@
         error: data.failures.noteSave > 0,
       },
       schedule: {
-        weekStart: F.weekStart(F.parse(data.now), 3),
+        weekShift: 0, // сдвиг от текущей недели в неделях; начало недели считается в выбранном поясе
         offset: 3,
       },
     };
