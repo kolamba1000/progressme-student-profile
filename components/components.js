@@ -270,7 +270,7 @@
     emits: ['action'],
     template: `<div class="signal-row" :class="'signal-row--' + tone">
       <span class="signal-row__icon-circle"><pm-icon :name="signal.icon" size="s"></pm-icon></span>
-      <p class="signal-row__text body-strong">{{ signal.text }}<span v-if="classLabel" class="signal-row__class">&nbsp;· {{ classLabel }}</span></p>
+      <p class="signal-row__text body-strong">{{ signal.text }}<span v-if="classLabel" class="signal-row__class">&nbsp;·&nbsp;{{ classLabel }}</span></p>
       <span class="signal-row__action crossfade">
         <transition name="fade">
           <span v-if="reminded" key="done" class="signal-row__done body text-secondary" role="status">
@@ -310,7 +310,7 @@
     template: `<div class="activity-item">
       <span class="activity-item__time small text-secondary">{{ time }}</span>
       <span class="activity-item__icon-slot"><pm-icon :name="icon" size="s"></pm-icon></span>
-      <p class="activity-item__text body">{{ text }}<span v-if="classLabel" class="activity-item__class">&nbsp;· {{ classLabel }}</span></p>
+      <p class="activity-item__text body">{{ text }}<span v-if="classLabel" class="activity-item__class">&nbsp;·&nbsp;{{ classLabel }}</span></p>
     </div>`,
   };
 
@@ -381,7 +381,7 @@
       <div class="profile-card__info">
         <div class="profile-card__name">
           <h1 class="profile-card__title">{{ student.name }}</h1>
-          <p class="profile-card__caption small text-secondary">ID&nbsp;{{ student.id }}&nbsp;· {{ student.timezone }}</p>
+          <p class="profile-card__caption small text-secondary">ID&nbsp;{{ student.id }}&nbsp;·&nbsp;{{ student.timezone }}</p>
         </div>
         <ul class="profile-card__contacts small text-secondary">
           <li class="profile-card__contact">ID&nbsp;{{ student.id }}</li>
