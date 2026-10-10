@@ -3,6 +3,7 @@
 
 window.ScreenClass = (function () {
   const F = window.Format;
+  const CLOCK_MS = 30000;
 
   return {
     props: {
@@ -12,13 +13,18 @@ window.ScreenClass = (function () {
     },
     emits: ['out-of-scope'],
     data() {
-      return { mobileQuery: window.matchMedia('(max-width: 767px)'), isMobile: false };
+      return { mobileQuery: window.matchMedia('(max-width: 767px)'), isMobile: false, clockNow: 0, clockTimer: null };
     },
     created() {
       this.isMobile = this.mobileQuery.matches;
       this.mobileQuery.addEventListener('change', this.onMediaChange);
+      this.tick();
+      this.clockTimer = setInterval(this.tick, CLOCK_MS);
     },
-    beforeUnmount() { this.mobileQuery.removeEventListener('change', this.onMediaChange); },
+    beforeUnmount() {
+      this.mobileQuery.removeEventListener('change', this.onMediaChange);
+      clearInterval(this.clockTimer);
+    },
     computed: {
       st() { return this.state; },
       cls() { return this.st.classes.find((c) => c.id === this.classId); },
@@ -26,11 +32,18 @@ window.ScreenClass = (function () {
       weekLabel() { return F.weekLabel(this.schedule.weekStart, this.schedule.offset); },
       lessons() { return this.st.lessons.filter((l) => l.classId === this.classId); },
       timezoneOptions() {
-        return this.st.timezones.map((tz) => ({ value: tz.offset, label: F.timezoneLabel(tz, this.st.now) }));
+        return this.st.timezones.map((tz) => ({ value: tz.offset, label: F.timezoneLabel(tz, this.clockNow) }));
       },
     },
     methods: {
       onMediaChange(e) { this.isMobile = e.matches; },
+      // Линия «сейчас» и время в поле пояса идут по реальным часам, а дата остаётся демо-датой:
+      // к началу демо-дня в поясе ученика прибавляется реальное время суток в том же поясе
+      tick() {
+        const demoDayStart = F.parts(this.st.now, this.st.offset).dayStart;
+        const realDayStart = F.parts(Date.now(), this.st.offset).dayStart;
+        this.clockNow = demoDayStart + (Date.now() - realDayStart);
+      },
       shiftWeek(days) { this.schedule.weekStart += days * F.DAY; },
       titleOf() { return this.cls.name; },
     },
@@ -51,8 +64,8 @@ window.ScreenClass = (function () {
           <pm-week-switcher :label="weekLabel" @prev="shiftWeek(-7)" @next="shiftWeek(7)"></pm-week-switcher>
           <pm-select class="card-schedule__timezone" v-model="schedule.offset" :options="timezoneOptions" icon="globe" label="Часовой пояс расписания"></pm-select>
         </div>
-        <pm-schedule-week v-if="!isMobile" class="card-schedule__week" :lessons="lessons" :week-start="schedule.weekStart" :now="st.now" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-week>
-        <pm-schedule-day-list v-else class="card-schedule__list" :lessons="lessons" :week-start="schedule.weekStart" :now="st.now" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-day-list>
+        <pm-schedule-week v-if="!isMobile" class="card-schedule__week" :lessons="lessons" :week-start="schedule.weekStart" :now="clockNow" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-week>
+        <pm-schedule-day-list v-else class="card-schedule__list" :lessons="lessons" :week-start="schedule.weekStart" :now="clockNow" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-day-list>
       </pm-card>
     </div>`,
   };
