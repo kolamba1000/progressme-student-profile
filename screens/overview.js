@@ -60,11 +60,12 @@ window.ScreenOverview = (function () {
       visibleSignals() { return this.st.signals.filter((s) => !this.st.gone[s.id]); },
       signals() { return this.visibleSignals.filter((s) => !this.st.settled[s.id]); },
       waitingSignals() { return this.visibleSignals.filter((s) => this.st.settled[s.id]); },
-      // Несколько убранных в одном списке: подпись остаётся только у последнего, прежние складываются
-      lastRemovedMain() { return this.lastRemovedIn(this.signals); },
-      lastRemovedWaiting() { return this.lastRemovedIn(this.waitingSignals); },
-      // Строки, которые занимают место в основном списке: без сложенных подписей прежних убранных
-      shownSignals() { return this.signals.filter((s) => !this.st.removed[s.id] || s.id === this.lastRemovedMain); },
+      // Несколько убранных в одном списке: подпись остаётся на месте первого убранного и только меняет число
+      // («Убрано из списка: N»), следующие убранные строки просто складываются (замечание пользователя 10 октября)
+      anchorMain() { return this.removedIn(this.signals)[0] || null; },
+      anchorWaiting() { return this.removedIn(this.waitingSignals)[0] || null; },
+      // Строки, которые занимают место в основном списке: без сложенных убранных, кроме строки с подписью
+      shownSignals() { return this.signals.filter((s) => !this.st.removed[s.id] || s.id === this.anchorMain); },
       activeCount() { return this.visibleSignals.filter((s) => !this.st.reminded[s.id] && !this.st.removed[s.id]).length; },
       firstActiveId() { const s = this.signals.find((x) => !this.st.reminded[x.id] && !this.st.removed[x.id]); return s ? s.id : null; },
       signalsCollapsible() { return this.collapseOnVisit && this.shownSignals.length > VISIBLE_SIGNALS; },
@@ -72,12 +73,12 @@ window.ScreenOverview = (function () {
       isCollapsed() {
         return (signal) => {
           if (this.st.collapsing[signal.id]) return true;
-          if (this.st.removed[signal.id] && signal.id !== this.lastRemovedMain) return true;
+          if (this.st.removed[signal.id] && signal.id !== this.anchorMain) return true;
           const index = this.shownSignals.indexOf(signal);
           return this.signalsCollapsible && !this.st.signalsExpanded && index >= VISIBLE_SIGNALS;
         };
       },
-      isWaitingCollapsed() { return (signal) => !!this.st.removed[signal.id] && signal.id !== this.lastRemovedWaiting; },
+      isWaitingCollapsed() { return (signal) => !!this.st.removed[signal.id] && signal.id !== this.anchorWaiting; },
       hiddenCount() { return this.shownSignals.length - VISIBLE_SIGNALS; },
       attentionTitle() { return F.typo('Требует внимания · ' + this.activeCount); },
       waitingTitle() { return F.typo('Ждут ответа · ' + this.waitingSignals.length); },
@@ -141,34 +142,33 @@ window.ScreenOverview = (function () {
         }, SETTLE_MS);
       },
       rowEl(signal) { return this.$el.querySelector('[data-signal="' + signal.id + '"] > .list__item-inner'); },
-      lastRemovedIn(list) {
+      // Убранные в списке в порядке, в котором их убирали
+      removedIn(list) {
         const ids = list.map((s) => s.id);
-        const order = this.st.removedOrder.filter((id) => this.st.removed[id] && ids.includes(id));
-        return order.length ? order[order.length - 1] : null;
+        return this.st.removedOrder.filter((id) => this.st.removed[id] && ids.includes(id));
       },
-      removedCountIn(signal) {
-        const list = this.st.settled[signal.id] ? this.waitingSignals : this.signals;
-        return list.filter((s) => this.st.removed[s.id]).length;
-      },
-      isLastRemoved(signal) { return signal.id === (this.st.settled[signal.id] ? this.lastRemovedWaiting : this.lastRemovedMain); },
+      listOf(signal) { return this.st.settled[signal.id] ? this.waitingSignals : this.signals; },
       hiddenText(signal) {
-        const n = this.removedCountIn(signal);
-        return n > 1 && this.isLastRemoved(signal) ? F.typo('Убрано из списка: ' + n) : this.st.removed[signal.id];
+        const n = this.removedIn(this.listOf(signal)).length;
+        return n > 1 ? F.typo('Убрано из списка: ' + n) : this.st.removed[signal.id];
       },
-      hiddenUndoLabel(signal) { return this.removedCountIn(signal) > 1 && this.isLastRemoved(signal) ? 'Отменить последнее' : 'Отменить'; },
+      hiddenUndoLabel(signal) { return this.removedIn(this.listOf(signal)).length > 1 ? 'Отменить последнее' : 'Отменить'; },
+      // Первый убранный в списке: строка меняется на подпись на месте (высота плавно). Следующие: строка складывается,
+      // а в подписи на месте первого растёт число
       onSignalMenu(signal, item) {
         if (item.kind === 'open') { this.$emit('out-of-scope'); return; }
-        animateHeight(this.rowEl(signal), () => {
-          this.st.removed[signal.id] = item.done;
-          this.st.removedOrder.push(signal.id);
-        });
+        const apply = () => { this.st.removed[signal.id] = item.done; this.st.removedOrder.push(signal.id); };
+        if (this.removedIn(this.listOf(signal)).length) apply();
+        else animateHeight(this.rowEl(signal), apply);
       },
-      undoRemove(signal) {
-        animateHeight(this.rowEl(signal), () => {
-          delete this.st.removed[signal.id];
-          const i = this.st.removedOrder.lastIndexOf(signal.id);
-          if (i >= 0) this.st.removedOrder.splice(i, 1);
-        });
+      // «Отменить последнее» возвращает последний убранный на его место (строка раскрывается), число в подписи уменьшается;
+      // когда убранный один, «Отменить» возвращает его самого на месте подписи
+      undoRemove(anchor) {
+        const order = this.removedIn(this.listOf(anchor));
+        const last = order[order.length - 1];
+        const forget = () => { delete this.st.removed[last]; const i = this.st.removedOrder.lastIndexOf(last); if (i >= 0) this.st.removedOrder.splice(i, 1); };
+        if (last === anchor.id) animateHeight(this.rowEl(anchor), forget);
+        else forget();
       },
       retryActivity() {
         this.st.activityStatus = 'loading';
