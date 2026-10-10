@@ -984,9 +984,26 @@
   grid-template-columns: var(--size-time-column) repeat(7, minmax(0, 1fr));
 }
 
-/* Урок через полночь обрезается по нижнему краю сетки, а не выступает под неё */
-.schedule-week__grid-body {
+/* Окно просмотра: показывает часть полной сетки, высота и сдвиг сетки анимируются (D-79, «Показать весь
+   день»). Нижняя граница у окна, а не у колонок дней: колонки продолжаются за окно. Урок через полночь
+   обрезается по краю окна */
+.schedule-week__viewport {
+  position: relative;
   overflow: hidden;
+  transition: height var(--motion-slow) var(--motion-ease);
+}
+
+.schedule-week__viewport::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: var(--size-time-column);
+  border-top: 1px solid var(--border-default);
+}
+
+.schedule-week__grid-body {
+  transition: transform var(--motion-slow) var(--motion-ease);
 }
 
 .schedule-time-column {
@@ -1006,7 +1023,6 @@
   display: flex;
   flex-direction: column;
   border-left: 1px solid var(--border-default);
-  border-bottom: 1px solid var(--border-default);
 }
 
 .schedule-day-column:last-child {

@@ -499,7 +499,9 @@
   };
 
   // Неделя: подписи дней, колонка часов и семь колонок дней; события — слоем внутри колонки дня.
-  // Окно часов задаёт экран (hourStart включительно, hourEnd исключительно); по умолчанию 8:00–22:00.
+  // Сетка рендерится целиком (hourStart включительно, hourEnd исключительно; по умолчанию 8:00–22:00),
+  // а показывается через окно viewStart–viewEnd: высота окна и сдвиг сетки анимируются CSS-переходом,
+  // поэтому «Показать весь день» и смена окна при листании недель разворачивают сетку, а не перерисовывают
   components['pm-schedule-week'] = {
     props: {
       lessons: { type: Array, required: true },
@@ -509,9 +511,17 @@
       titleOf: { type: Function, required: true },
       hourStart: { type: Number, default: 8 },
       hourEnd: { type: Number, default: 23 },
+      viewStart: Number,
+      viewEnd: Number,
     },
     computed: {
       hours() { return Array.from({ length: this.hourEnd - this.hourStart }, (_, i) => this.hourStart + i); },
+      view() {
+        return { start: this.viewStart == null ? this.hourStart : this.viewStart, end: this.viewEnd == null ? this.hourEnd : this.viewEnd };
+      },
+      viewportStyle() { return { height: 'calc(var(--layout-hour) * ' + (this.view.end - this.view.start) + ')' }; },
+      bodyStyle() { return { transform: 'translateY(calc(var(--layout-hour) * ' + (this.hourStart - this.view.start) + '))' }; },
+      isHidden() { return (h) => h < this.view.start || h >= this.view.end; },
       days() {
         return Array.from({ length: 7 }, (_, i) => {
           const start = this.weekStart + i * F.DAY;
@@ -536,15 +546,17 @@
         <span class="schedule-week__corner"></span>
         <pm-day-header v-for="d in days" :key="d.start" :label="d.label" :today="d.today"></pm-day-header>
       </div>
-      <div class="schedule-week__grid-body">
+      <div class="schedule-week__viewport" :style="viewportStyle">
+      <div class="schedule-week__grid-body" :style="bodyStyle">
         <div class="schedule-time-column">
-          <span v-for="h in hours" :key="h" class="schedule-time-column__cell small text-muted">{{ h }}:00</span>
+          <span v-for="h in hours" :key="h" class="schedule-time-column__cell small text-muted" :aria-hidden="isHidden(h)">{{ h }}:00</span>
         </div>
         <div v-for="d in days" :key="d.start" class="schedule-day-column" :class="{ 'schedule-day-column--today': d.today }">
           <span v-for="h in hours" :key="h" class="schedule-hour-cell"></span>
           <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :title="titleOf(l)" :offset="offset" :hour-start="hourStart"></pm-schedule-event>
           <pm-now-indicator v-if="d.today && nowTop" :top="nowTop"></pm-now-indicator>
         </div>
+      </div>
       </div>
     </div>`,
   };

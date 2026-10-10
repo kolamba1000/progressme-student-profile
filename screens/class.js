@@ -49,12 +49,13 @@ window.ScreenClass = (function () {
         const inWeek = this.lessons.filter((l) => { const ms = F.parse(l.start); return ms >= this.weekStart && ms < weekEnd; });
         return this.windowOf(inWeek.length ? inWeek : this.lessons);
       },
-      // «Весь день» — 8:00–22:00, расширенные до окна уроков: урок в 7:00 не должен выпасть из полной сетки
-      hourWindow() {
+      // Полная сетка — 8:00–22:00, расширенные до окна уроков: урок в 7:00 не должен выпасть из полной сетки.
+      // Рендерится всегда целиком, а видна через окно просмотра: так раскрытие и смена окна анимируются
+      fullWindow() {
         const w = this.lessonWindow;
-        if (!this.schedule.fullDay) return w;
         return { start: Math.min(FULL_DAY.start, w.start), end: Math.max(FULL_DAY.end, w.end) };
       },
+      viewWindow() { return this.schedule.fullDay ? this.fullWindow : this.lessonWindow; },
       hoursToggleLabel() { return this.schedule.fullDay ? 'Только часы уроков' : 'Показать весь день'; },
       timezoneOptions() {
         return this.st.timezones.map((tz) => ({ value: tz.offset, label: F.timezoneLabel(tz, this.clockNow) }));
@@ -106,7 +107,7 @@ window.ScreenClass = (function () {
         </div>
         <template v-if="!isMobile">
           <pm-schedule-week class="card-schedule__week" :lessons="lessons" :week-start="weekStart" :now="clockNow" :offset="schedule.offset"
-            :hour-start="hourWindow.start" :hour-end="hourWindow.end" :title-of="titleOf"></pm-schedule-week>
+            :hour-start="fullWindow.start" :hour-end="fullWindow.end" :view-start="viewWindow.start" :view-end="viewWindow.end" :title-of="titleOf"></pm-schedule-week>
           <pm-link class="card-schedule__hours-toggle" tone="muted" :icon-right="schedule.fullDay ? 'chevron-up' : 'chevron-down'"
             :aria-expanded="schedule.fullDay" @click="toggleFullDay">{{ hoursToggleLabel }}</pm-link>
         </template>
