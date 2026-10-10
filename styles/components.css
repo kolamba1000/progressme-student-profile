@@ -16,6 +16,7 @@
   --size-class-card: 240px;
   --size-select-timezone: 280px;
   --size-time-column: 56px;
+  --size-week-range: 140px;
   --size-logo-m-width: 151px;
   --size-logo-m-height: 26px;
   --size-logo-s-width: 121px;
@@ -933,8 +934,11 @@
   background: var(--border-default);
 }
 
+/* Ширина подписи по самой длинной неделе («30 ноя – 6 дек»), чтобы кнопки не уезжали при переключении */
 .week-switcher__range {
+  min-width: var(--size-week-range);
   padding: 0 var(--space-16);
+  text-align: center;
   white-space: nowrap;
 }
 
