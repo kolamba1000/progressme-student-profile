@@ -165,6 +165,12 @@ body.menu-open {
   gap: var(--space-16);
 }
 
+/* Ссылка «Показать весь день» под сеткой, ближе к ней, чем шаг карточки */
+.card-schedule__hours-toggle {
+  align-self: flex-start;
+  margin-top: calc(-1 * var(--space-8));
+}
+
 /* Поле пояса по содержимому: справа от него ничего нет, при смене значения двигается только левый край */
 .card-schedule__timezone {
   width: auto;

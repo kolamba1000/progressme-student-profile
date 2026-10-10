@@ -462,6 +462,7 @@
       title: { type: String, required: true },
       offset: { type: Number, required: true },
       layout: { type: String, default: 'grid' },
+      hourStart: { type: Number, default: 8 }, // первый час сетки: от него считается top события
     },
     computed: {
       status() { return LESSON_STATUS[this.lesson.status]; },
@@ -472,7 +473,7 @@
         if (this.layout !== 'grid') return null;
         const startMs = F.parse(this.lesson.start);
         const p = F.parts(startMs, this.offset);
-        const minutesFromStart = (p.hours - 8) * 60 + p.minutes;
+        const minutesFromStart = (p.hours - this.hourStart) * 60 + p.minutes;
         const hour = 'var(--layout-hour)';
         return {
           top: 'calc(' + hour + ' * ' + (minutesFromStart / 60) + ' + var(--space-2))',
@@ -497,7 +498,8 @@
     </div>`,
   };
 
-  // Неделя: подписи дней, колонка часов 8:00–22:00 и семь колонок дней; события — слоем внутри колонки дня.
+  // Неделя: подписи дней, колонка часов и семь колонок дней; события — слоем внутри колонки дня.
+  // Окно часов задаёт экран (hourStart включительно, hourEnd исключительно); по умолчанию 8:00–22:00.
   components['pm-schedule-week'] = {
     props: {
       lessons: { type: Array, required: true },
@@ -505,9 +507,11 @@
       now: { type: Number, required: true },
       offset: { type: Number, required: true },
       titleOf: { type: Function, required: true },
+      hourStart: { type: Number, default: 8 },
+      hourEnd: { type: Number, default: 23 },
     },
     computed: {
-      hours() { return Array.from({ length: 15 }, (_, i) => 8 + i); },
+      hours() { return Array.from({ length: this.hourEnd - this.hourStart }, (_, i) => this.hourStart + i); },
       days() {
         return Array.from({ length: 7 }, (_, i) => {
           const start = this.weekStart + i * F.DAY;
@@ -522,8 +526,8 @@
       },
       nowTop() {
         const p = F.parts(this.now, this.offset);
-        const minutes = (p.hours - 8) * 60 + p.minutes;
-        if (minutes < 0 || minutes > 15 * 60) return null;
+        const minutes = (p.hours - this.hourStart) * 60 + p.minutes;
+        if (minutes < 0 || minutes > this.hours.length * 60) return null;
         return 'calc(var(--layout-hour) * ' + (minutes / 60) + ')';
       },
     },
@@ -538,7 +542,7 @@
         </div>
         <div v-for="d in days" :key="d.start" class="schedule-day-column" :class="{ 'schedule-day-column--today': d.today }">
           <span v-for="h in hours" :key="h" class="schedule-hour-cell"></span>
-          <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :title="titleOf(l)" :offset="offset"></pm-schedule-event>
+          <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :title="titleOf(l)" :offset="offset" :hour-start="hourStart"></pm-schedule-event>
           <pm-now-indicator v-if="d.today && nowTop" :top="nowTop"></pm-now-indicator>
         </div>
       </div>
