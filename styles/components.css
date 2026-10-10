@@ -1108,10 +1108,11 @@
   pointer-events: none;
 }
 
+/* Точка стоит на левой границе колонки, линия идёт до правой: отрезок покрывает всю ячейку дня */
 .now-indicator__dot {
   width: var(--space-8);
   height: var(--space-8);
-  margin-left: var(--space-4);
+  margin-left: calc(-1 * var(--space-4));
   border-radius: var(--radius-full);
   background: var(--accent-default);
 }
