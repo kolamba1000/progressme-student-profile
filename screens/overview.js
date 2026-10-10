@@ -12,23 +12,6 @@ window.ScreenOverview = (function () {
   const HIDE_ITEM = { label: 'Скрыть', kind: 'hide', done: 'Сигнал скрыт' };
   const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  // Плавная смена высоты строки, когда её содержимое меняется на месте (сигнал → «Сигнал скрыт» и обратно)
-  function animateHeight(el, mutate, done) {
-    if (!el || reducedMotion()) { mutate(); if (done) done(); return; }
-    const from = el.getBoundingClientRect().height;
-    mutate();
-    requestAnimationFrame(() => {
-      const to = el.getBoundingClientRect().height;
-      if (Math.abs(to - from) < 1) { if (done) done(); return; }
-      el.style.height = from + 'px';
-      el.style.overflow = 'hidden';
-      el.getBoundingClientRect();
-      el.style.transition = 'height var(--motion-slow) var(--motion-ease)';
-      el.style.height = to + 'px';
-      el.addEventListener('transitionend', () => { el.style.height = ''; el.style.overflow = ''; el.style.transition = ''; if (done) done(); }, { once: true });
-    });
-  }
-
   return {
     props: { state: { type: Object, required: true } },
     emits: ['out-of-scope'],
@@ -36,7 +19,8 @@ window.ScreenOverview = (function () {
     // и дальше не меняется, пока учитель на странице: ушедший сигнал заменяет следующий по срочности, ссылка остаётся
     // даже при одном скрытом. Иначе после «Напомнить» список раскрывался и карточка росла от действия, которое её сокращает
     data() { return { collapseOnVisit: false }; },
-    created() { this.decideCollapse(); },
+    // Последняя подпись убранных: не реактивна, нужна, чтобы строка складывалась с прежним текстом
+    created() { this.summaryMemo = {}; this.decideCollapse(); },
     // Другой сценарий в адресе подменяет данные без пересоздания экрана: решение принимается заново
     watch: { state() { this.decideCollapse(); } },
     // Скрытые на этом заходе сигналы после ухода со страницы больше не показываются, подпись «Сигнал скрыт» исчезает
@@ -60,12 +44,13 @@ window.ScreenOverview = (function () {
       visibleSignals() { return this.st.signals.filter((s) => !this.st.gone[s.id]); },
       signals() { return this.visibleSignals.filter((s) => !this.st.settled[s.id]); },
       waitingSignals() { return this.visibleSignals.filter((s) => this.st.settled[s.id]); },
-      // Несколько убранных в одном списке: подпись остаётся на месте первого убранного и только меняет число
-      // («Убрано из списка: N»), следующие убранные строки просто складываются (замечание пользователя 10 октября)
-      anchorMain() { return this.removedIn(this.signals)[0] || null; },
-      anchorWaiting() { return this.removedIn(this.waitingSignals)[0] || null; },
-      // Строки, которые занимают место в основном списке: без сложенных убранных, кроме строки с подписью
-      shownSignals() { return this.signals.filter((s) => !this.st.removed[s.id] || s.id === this.anchorMain); },
+      // Убранные (скрыт или причина устранена из «⋯»): их строки складываются на месте, а подпись с «Отменить»
+      // стоит первой строкой списка и только меняет число. Постоянное место: строку не сдвигают ни скрытие,
+      // ни отмена сигналов выше неё (замечания пользователя 10 октября)
+      removedMain() { return this.removedIn(this.signals); },
+      removedWaiting() { return this.removedIn(this.waitingSignals); },
+      // Строки, которые занимают место в основном списке: без убранных
+      shownSignals() { return this.signals.filter((s) => !this.st.removed[s.id]); },
       activeCount() { return this.visibleSignals.filter((s) => !this.st.reminded[s.id] && !this.st.removed[s.id]).length; },
       firstActiveId() { const s = this.signals.find((x) => !this.st.reminded[x.id] && !this.st.removed[x.id]); return s ? s.id : null; },
       signalsCollapsible() { return this.collapseOnVisit && this.shownSignals.length > VISIBLE_SIGNALS; },
@@ -73,13 +58,15 @@ window.ScreenOverview = (function () {
       isCollapsed() {
         return (signal) => {
           if (this.st.collapsing[signal.id]) return true;
-          if (this.st.removed[signal.id] && signal.id !== this.anchorMain) return true;
+          if (this.st.removed[signal.id]) return true;
           const index = this.shownSignals.indexOf(signal);
           return this.signalsCollapsible && !this.st.signalsExpanded && index >= VISIBLE_SIGNALS;
         };
       },
       // Группа «Ждут ответа» свёрнута в строку-заголовок: строки видны только после нажатия на неё
-      isWaitingCollapsed() { return (signal) => !this.st.waitingExpanded || (!!this.st.removed[signal.id] && signal.id !== this.anchorWaiting); },
+      isWaitingCollapsed() { return (signal) => !this.st.waitingExpanded || !!this.st.removed[signal.id]; },
+      mainSummary() { return this.summaryOf(this.removedMain, 'main'); },
+      waitingSummary() { return this.summaryOf(this.removedWaiting, 'waiting'); },
       hiddenCount() { return this.shownSignals.length - VISIBLE_SIGNALS; },
       attentionTitle() { return F.typo('Требует внимания · ' + this.activeCount); },
       waitingTitle() { return F.typo('Ждут ответа · ' + this.waitingSignals.length); },
@@ -145,34 +132,34 @@ window.ScreenOverview = (function () {
           setTimeout(() => { st.settled[signal.id] = true; delete st.collapsing[signal.id]; }, reducedMotion() ? 0 : COLLAPSE_MS);
         }, SETTLE_MS);
       },
-      rowEl(signal) { return this.$el.querySelector('[data-signal="' + signal.id + '"] > .list__item-inner'); },
       // Убранные в списке в порядке, в котором их убирали
       removedIn(list) {
         const ids = list.map((s) => s.id);
         return this.st.removedOrder.filter((id) => this.st.removed[id] && ids.includes(id));
       },
-      listOf(signal) { return this.st.settled[signal.id] ? this.waitingSignals : this.signals; },
-      hiddenText(signal) {
-        const n = this.removedIn(this.listOf(signal)).length;
-        return n > 1 ? F.typo('Убрано из списка: ' + n) : this.st.removed[signal.id];
+      // Подпись: один убранный — что произошло («Сигнал скрыт», «Оплата отмечена»), несколько — «Убрано из списка: N».
+      // Пока строка складывается после последней отмены, в ней остаётся прежний текст
+      summaryOf(order, key) {
+        if (!order.length) return this.summaryMemo[key] || { text: '', undo: 'Отменить' };
+        const memo = order.length > 1
+          ? { text: F.typo('Убрано из списка: ' + order.length), undo: 'Отменить последнее' }
+          : { text: this.st.removed[order[0]], undo: 'Отменить' };
+        this.summaryMemo[key] = memo;
+        return memo;
       },
-      hiddenUndoLabel(signal) { return this.removedIn(this.listOf(signal)).length > 1 ? 'Отменить последнее' : 'Отменить'; },
-      // Первый убранный в списке: строка меняется на подпись на месте (высота плавно). Следующие: строка складывается,
-      // а в подписи на месте первого растёт число
+      // Строка сигнала складывается на месте, подпись первой строкой списка появляется или меняет число
       onSignalMenu(signal, item) {
         if (item.kind === 'open') { this.$emit('out-of-scope'); return; }
-        const apply = () => { this.st.removed[signal.id] = item.done; this.st.removedOrder.push(signal.id); };
-        if (this.removedIn(this.listOf(signal)).length) apply();
-        else animateHeight(this.rowEl(signal), apply);
+        this.st.removed[signal.id] = item.done;
+        this.st.removedOrder.push(signal.id);
       },
-      // «Отменить последнее» возвращает последний убранный на его место (строка раскрывается), число в подписи уменьшается;
-      // когда убранный один, «Отменить» возвращает его самого на месте подписи
-      undoRemove(anchor) {
-        const order = this.removedIn(this.listOf(anchor));
+      // «Отменить» и «Отменить последнее» возвращают последний убранный на его место, число в подписи уменьшается
+      undoLast(order) {
         const last = order[order.length - 1];
-        const forget = () => { delete this.st.removed[last]; const i = this.st.removedOrder.lastIndexOf(last); if (i >= 0) this.st.removedOrder.splice(i, 1); };
-        if (last === anchor.id) animateHeight(this.rowEl(anchor), forget);
-        else forget();
+        if (!last) return;
+        delete this.st.removed[last];
+        const i = this.st.removedOrder.lastIndexOf(last);
+        if (i >= 0) this.st.removedOrder.splice(i, 1);
       },
       retryActivity() {
         this.st.activityStatus = 'loading';
@@ -209,11 +196,15 @@ window.ScreenOverview = (function () {
             <pm-card-header v-if="activeCount" :title="attentionTitle"></pm-card-header>
             <pm-all-clear-row v-else title="Требует внимания" :caption="allClearCaption"></pm-all-clear-row>
             <transition-group v-if="signals.length" name="list" tag="ul" class="list">
+              <li key="removed-summary" class="list__item list__item--collapsible" :class="{ 'list__item--collapsed': !removedMain.length }" :inert="!removedMain.length">
+                <div class="list__item-inner">
+                  <pm-hidden-signal-row :text="mainSummary.text" :undo-label="mainSummary.undo" @undo="undoLast(removedMain)"></pm-hidden-signal-row>
+                </div>
+              </li>
               <li v-for="s in signals" :key="s.id" class="list__item" :data-signal="s.id"
                 :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isCollapsed(s) }" :inert="isCollapsed(s)">
                 <div class="list__item-inner">
-                  <pm-hidden-signal-row v-if="st.removed[s.id]" :text="hiddenText(s)" :undo-label="hiddenUndoLabel(s)" @undo="undoRemove(s)"></pm-hidden-signal-row>
-                  <pm-signal-row v-else :signal="s" :tone="signalTone(s)" :class-label="classLabel(s.classId)" :reminded="!!st.reminded[s.id]"
+                  <pm-signal-row :signal="s" :tone="signalTone(s)" :class-label="classLabel(s.classId)" :reminded="!!st.reminded[s.id]"
                     :menu="menuOf(s)" @action="onSignalAction(s)" @menu="onSignalMenu(s, $event)"></pm-signal-row>
                 </div>
               </li>
@@ -228,11 +219,16 @@ window.ScreenOverview = (function () {
               <pm-link class="signals-waiting__toggle" tone="muted" :icon-right="st.waitingExpanded ? 'chevron-up' : 'chevron-down'"
                 :aria-expanded="st.waitingExpanded" @click="st.waitingExpanded = !st.waitingExpanded">{{ waitingTitle }}</pm-link>
               <transition-group name="fade" tag="ul" class="list">
+                <li key="removed-summary" class="list__item list__item--collapsible"
+                  :class="{ 'list__item--collapsed': !st.waitingExpanded || !removedWaiting.length }" :inert="!st.waitingExpanded || !removedWaiting.length">
+                  <div class="list__item-inner">
+                    <pm-hidden-signal-row :text="waitingSummary.text" :undo-label="waitingSummary.undo" @undo="undoLast(removedWaiting)"></pm-hidden-signal-row>
+                  </div>
+                </li>
                 <li v-for="s in waitingSignals" :key="s.id" class="list__item" :data-signal="s.id"
                   :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isWaitingCollapsed(s) }" :inert="isWaitingCollapsed(s)">
                   <div class="list__item-inner">
-                    <pm-hidden-signal-row v-if="st.removed[s.id]" :text="hiddenText(s)" :undo-label="hiddenUndoLabel(s)" @undo="undoRemove(s)"></pm-hidden-signal-row>
-                    <pm-signal-row v-else :signal="s" tone="neutral" :class-label="classLabel(s.classId)" reminded
+                    <pm-signal-row :signal="s" tone="neutral" :class-label="classLabel(s.classId)" reminded
                       :menu="menuOf(s)" @menu="onSignalMenu(s, $event)"></pm-signal-row>
                   </div>
                 </li>
