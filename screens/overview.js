@@ -32,6 +32,13 @@ window.ScreenOverview = (function () {
   return {
     props: { state: { type: Object, required: true } },
     emits: ['out-of-scope'],
+    // Свёрнут ли список, решается при загрузке страницы (больше четырёх — видны три и «Показать ещё»; четыре и меньше — все)
+    // и дальше не меняется, пока учитель на странице: ушедший сигнал заменяет следующий по срочности, ссылка остаётся
+    // даже при одном скрытом. Иначе после «Напомнить» список раскрывался и карточка росла от действия, которое её сокращает
+    data() { return { collapseOnVisit: false }; },
+    created() { this.decideCollapse(); },
+    // Другой сценарий в адресе подменяет данные без пересоздания экрана: решение принимается заново
+    watch: { state() { this.decideCollapse(); } },
     // Скрытые на этом заходе сигналы после ухода со страницы больше не показываются, подпись «Сигнал скрыт» исчезает
     beforeUnmount() {
       Object.keys(this.st.removed).forEach((id) => { this.st.gone[id] = true; delete this.st.removed[id]; });
@@ -60,7 +67,7 @@ window.ScreenOverview = (function () {
       shownSignals() { return this.signals.filter((s) => !this.st.removed[s.id] || s.id === this.lastRemovedMain); },
       activeCount() { return this.visibleSignals.filter((s) => !this.st.reminded[s.id] && !this.st.removed[s.id]).length; },
       firstActiveId() { const s = this.signals.find((x) => !this.st.reminded[x.id] && !this.st.removed[x.id]); return s ? s.id : null; },
-      signalsCollapsible() { return this.shownSignals.length > VISIBLE_SIGNALS + 1; },
+      signalsCollapsible() { return this.collapseOnVisit && this.shownSignals.length > VISIBLE_SIGNALS; },
       // Все сигналы остаются в разметке; скрытые схлопываются CSS-переходом и получают inert
       isCollapsed() {
         return (signal) => {
@@ -119,6 +126,7 @@ window.ScreenOverview = (function () {
     },
     methods: {
       classLabel(classId) { return this.showClassTails && this.classById[classId] ? this.classById[classId].name : null; },
+      decideCollapse() { this.collapseOnVisit = this.shownSignals.length > VISIBLE_SIGNALS + 1; },
       signalTone(signal) { return signal.id === this.firstActiveId ? signal.tone : 'neutral'; },
       menuOf(signal) { return (signal.menu || []).concat([HIDE_ITEM]); },
       // «Напомнить»: метка на месте кнопки, счётчик сразу меньше; через паузу строка складывается и переезжает в «Ждут ответа»
