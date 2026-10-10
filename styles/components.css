@@ -667,17 +667,21 @@
   min-height: var(--size-control);
 }
 
-/* Группа «Ждут ответа» под основным списком: отделена линией, как строки списка */
+/* Группа «Ждут ответа» под основным списком: отделена линией, свёрнута в строку-заголовок со стрелкой.
+   Строки остаются в разметке и складываются, как свёрнутые сигналы; список прижат к заголовку отрицательным отступом */
 .signals-waiting {
   display: flex;
   flex-direction: column;
-  gap: var(--space-16);
   padding-top: var(--space-16);
   border-top: 1px solid var(--border-default);
 }
 
-.signals-waiting__title {
-  margin: 0;
+.signals-waiting__toggle {
+  align-self: flex-start;
+}
+
+.signals-waiting > .list {
+  margin-top: 0;
 }
 
 /* size=narrow: кнопка под текстом, «⋯» справа от первой строки текста.

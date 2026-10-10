@@ -78,7 +78,8 @@ window.ScreenOverview = (function () {
           return this.signalsCollapsible && !this.st.signalsExpanded && index >= VISIBLE_SIGNALS;
         };
       },
-      isWaitingCollapsed() { return (signal) => !!this.st.removed[signal.id] && signal.id !== this.anchorWaiting; },
+      // Группа «Ждут ответа» свёрнута в строку-заголовок: строки видны после нажатия на неё или при «Показать ещё»
+      isWaitingCollapsed() { return (signal) => !this.st.waitingExpanded || (!!this.st.removed[signal.id] && signal.id !== this.anchorWaiting); },
       hiddenCount() { return this.shownSignals.length - VISIBLE_SIGNALS; },
       attentionTitle() { return F.typo('Требует внимания · ' + this.activeCount); },
       waitingTitle() { return F.typo('Ждут ответа · ' + this.waitingSignals.length); },
@@ -130,6 +131,11 @@ window.ScreenOverview = (function () {
       decideCollapse() { this.collapseOnVisit = this.shownSignals.length > VISIBLE_SIGNALS + 1; },
       signalTone(signal) { return signal.id === this.firstActiveId ? signal.tone : 'neutral'; },
       menuOf(signal) { return (signal.menu || []).concat([HIDE_ITEM]); },
+      // «Показать ещё» раскрывает весь раздел, вместе с «Ждут ответа»; «Свернуть» сворачивает обе части
+      toggleSignals() {
+        this.st.signalsExpanded = !this.st.signalsExpanded;
+        this.st.waitingExpanded = this.st.signalsExpanded;
+      },
       // «Напомнить»: метка на месте кнопки, счётчик сразу меньше; через паузу строка складывается и переезжает в «Ждут ответа»
       onSignalAction(signal) {
         if (signal.action.kind !== 'remind') { this.$emit('out-of-scope'); return; }
@@ -215,13 +221,14 @@ window.ScreenOverview = (function () {
               </li>
               <li v-if="signalsCollapsible" key="footer" class="list__item list__item--footer">
                 <pm-link tone="muted" :icon-right="st.signalsExpanded ? 'chevron-up' : 'chevron-down'"
-                  :aria-expanded="st.signalsExpanded" @click="st.signalsExpanded = !st.signalsExpanded">
+                  :aria-expanded="st.signalsExpanded" @click="toggleSignals">
                   {{ st.signalsExpanded ? 'Свернуть' : 'Показать ещё ' + hiddenCount }}
                 </pm-link>
               </li>
             </transition-group>
-            <section v-if="waitingSignals.length" class="signals-waiting" aria-labelledby="signals-waiting-title">
-              <h3 id="signals-waiting-title" class="signals-waiting__title small text-secondary">{{ waitingTitle }}</h3>
+            <section v-if="waitingSignals.length" class="signals-waiting" :class="{ 'signals-waiting--open': st.waitingExpanded }" aria-label="Ждут ответа">
+              <pm-link class="signals-waiting__toggle" tone="muted" :icon-right="st.waitingExpanded ? 'chevron-up' : 'chevron-down'"
+                :aria-expanded="st.waitingExpanded" @click="st.waitingExpanded = !st.waitingExpanded">{{ waitingTitle }}</pm-link>
               <transition-group name="fade" tag="ul" class="list">
                 <li v-for="s in waitingSignals" :key="s.id" class="list__item" :data-signal="s.id"
                   :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isWaitingCollapsed(s) }" :inert="isWaitingCollapsed(s)">
