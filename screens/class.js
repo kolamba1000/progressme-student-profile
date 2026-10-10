@@ -41,8 +41,7 @@ window.ScreenClass = (function () {
       lessons() { return this.st.lessons.filter((l) => l.classId === this.classId); },
       // Окно часов сетки: по всем урокам ученика (все классы, прошлые и будущие), чтобы при смене класса
       // и листании недель сетка не прыгала. Нет уроков — окно по умолчанию
-      hourWindow() {
-        if (this.schedule.fullDay) return FULL_DAY;
+      lessonWindow() {
         const offset = this.schedule.offset;
         let start = Infinity;
         let end = -Infinity;
@@ -55,6 +54,12 @@ window.ScreenClass = (function () {
         start = Math.max(0, start - 1);
         end = Math.min(24, Math.max(end + 1, start + MIN_ROWS));
         return { start, end };
+      },
+      // «Весь день» — 8:00–22:00, расширенные до окна уроков: урок в 7:00 не должен выпасть из полной сетки
+      hourWindow() {
+        const w = this.lessonWindow;
+        if (!this.schedule.fullDay) return w;
+        return { start: Math.min(FULL_DAY.start, w.start), end: Math.max(FULL_DAY.end, w.end) };
       },
       hoursToggleLabel() { return this.schedule.fullDay ? 'Только часы уроков' : 'Показать весь день'; },
       timezoneOptions() {

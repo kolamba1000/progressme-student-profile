@@ -984,6 +984,11 @@
   grid-template-columns: var(--size-time-column) repeat(7, minmax(0, 1fr));
 }
 
+/* Урок через полночь обрезается по нижнему краю сетки, а не выступает под неё */
+.schedule-week__grid-body {
+  overflow: hidden;
+}
+
 .schedule-time-column {
   display: flex;
   flex-direction: column;
