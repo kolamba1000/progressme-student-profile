@@ -85,7 +85,30 @@ window.ScreenClass = (function () {
         end = Math.min(24, Math.max(end + 1, start + MIN_ROWS));
         return { start, end };
       },
-      toggleFullDay() { this.schedule.fullDay = !this.schedule.fullDay; },
+      // «Показать весь день» подводит страницу к урокам недели, если они есть и ушли с экрана:
+      // сетка разворачивается вверх, и уроки уезжают вниз на высоту добавленных часов. Прокрутка
+      // начинается после разворачивания, чтобы не ехать за движущейся сеткой
+      toggleFullDay() {
+        this.schedule.fullDay = !this.schedule.fullDay;
+        if (!this.schedule.fullDay) return;
+        this.$nextTick(() => {
+          const event = this.$el.querySelector('.schedule-event--grid');
+          const viewport = this.$el.querySelector('.schedule-week__viewport');
+          if (!event || !viewport) return;
+          const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+          let done = false;
+          const scroll = () => {
+            if (done) return;
+            done = true;
+            const r = event.getBoundingClientRect();
+            if (r.top >= 0 && r.bottom <= window.innerHeight) return;
+            event.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
+          };
+          if (reduced) { scroll(); return; }
+          viewport.addEventListener('transitionend', scroll, { once: true });
+          setTimeout(scroll, 400);
+        });
+      },
       titleOf() { return this.cls.name; },
     },
     template: `<div class="class-screen">
