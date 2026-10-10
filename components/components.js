@@ -316,12 +316,13 @@
   };
 
   // На месте скрытого сигнала до ухода со страницы: что произошло и «Отменить»
+  // Если убрано несколько, на месте последнего одна строка «Убрано из списка: N» и «Отменить последнее»
   components['pm-hidden-signal-row'] = {
-    props: { text: { type: String, required: true } },
+    props: { text: { type: String, required: true }, undoLabel: { type: String, default: 'Отменить' } },
     emits: ['undo'],
     template: `<div class="hidden-signal-row" role="status">
       <span class="body text-secondary">{{ text }}</span>
-      <pm-link @click="$emit('undo')">Отменить</pm-link>
+      <pm-link @click="$emit('undo')">{{ undoLabel }}</pm-link>
     </div>`,
   };
 

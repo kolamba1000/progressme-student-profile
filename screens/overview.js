@@ -35,6 +35,7 @@ window.ScreenOverview = (function () {
     // Скрытые на этом заходе сигналы после ухода со страницы больше не показываются, подпись «Сигнал скрыт» исчезает
     beforeUnmount() {
       Object.keys(this.st.removed).forEach((id) => { this.st.gone[id] = true; delete this.st.removed[id]; });
+      this.st.removedOrder.splice(0);
     },
     computed: {
       st() { return this.state; },
@@ -52,14 +53,25 @@ window.ScreenOverview = (function () {
       visibleSignals() { return this.st.signals.filter((s) => !this.st.gone[s.id]); },
       signals() { return this.visibleSignals.filter((s) => !this.st.settled[s.id]); },
       waitingSignals() { return this.visibleSignals.filter((s) => this.st.settled[s.id]); },
+      // Несколько убранных в одном списке: подпись остаётся только у последнего, прежние складываются
+      lastRemovedMain() { return this.lastRemovedIn(this.signals); },
+      lastRemovedWaiting() { return this.lastRemovedIn(this.waitingSignals); },
+      // Строки, которые занимают место в основном списке: без сложенных подписей прежних убранных
+      shownSignals() { return this.signals.filter((s) => !this.st.removed[s.id] || s.id === this.lastRemovedMain); },
       activeCount() { return this.visibleSignals.filter((s) => !this.st.reminded[s.id] && !this.st.removed[s.id]).length; },
       firstActiveId() { const s = this.signals.find((x) => !this.st.reminded[x.id] && !this.st.removed[x.id]); return s ? s.id : null; },
-      signalsCollapsible() { return this.signals.length > VISIBLE_SIGNALS + 1; },
+      signalsCollapsible() { return this.shownSignals.length > VISIBLE_SIGNALS + 1; },
       // Все сигналы остаются в разметке; скрытые схлопываются CSS-переходом и получают inert
       isCollapsed() {
-        return (signal, index) => (this.signalsCollapsible && !this.st.signalsExpanded && index >= VISIBLE_SIGNALS) || !!this.st.collapsing[signal.id];
+        return (signal) => {
+          if (this.st.collapsing[signal.id]) return true;
+          if (this.st.removed[signal.id] && signal.id !== this.lastRemovedMain) return true;
+          const index = this.shownSignals.indexOf(signal);
+          return this.signalsCollapsible && !this.st.signalsExpanded && index >= VISIBLE_SIGNALS;
+        };
       },
-      hiddenCount() { return this.signals.length - VISIBLE_SIGNALS; },
+      isWaitingCollapsed() { return (signal) => !!this.st.removed[signal.id] && signal.id !== this.lastRemovedWaiting; },
+      hiddenCount() { return this.shownSignals.length - VISIBLE_SIGNALS; },
       attentionTitle() { return F.typo('Требует внимания · ' + this.activeCount); },
       waitingTitle() { return F.typo('Ждут ответа · ' + this.waitingSignals.length); },
       allClearCaption() {
@@ -120,13 +132,35 @@ window.ScreenOverview = (function () {
           setTimeout(() => { st.settled[signal.id] = true; delete st.collapsing[signal.id]; }, reducedMotion() ? 0 : COLLAPSE_MS);
         }, SETTLE_MS);
       },
-      rowEl(signal) { return this.$el.querySelector('[data-signal="' + signal.id + '"]'); },
+      rowEl(signal) { return this.$el.querySelector('[data-signal="' + signal.id + '"] > .list__item-inner'); },
+      lastRemovedIn(list) {
+        const ids = list.map((s) => s.id);
+        const order = this.st.removedOrder.filter((id) => this.st.removed[id] && ids.includes(id));
+        return order.length ? order[order.length - 1] : null;
+      },
+      removedCountIn(signal) {
+        const list = this.st.settled[signal.id] ? this.waitingSignals : this.signals;
+        return list.filter((s) => this.st.removed[s.id]).length;
+      },
+      isLastRemoved(signal) { return signal.id === (this.st.settled[signal.id] ? this.lastRemovedWaiting : this.lastRemovedMain); },
+      hiddenText(signal) {
+        const n = this.removedCountIn(signal);
+        return n > 1 && this.isLastRemoved(signal) ? F.typo('Убрано из списка: ' + n) : this.st.removed[signal.id];
+      },
+      hiddenUndoLabel(signal) { return this.removedCountIn(signal) > 1 && this.isLastRemoved(signal) ? 'Отменить последнее' : 'Отменить'; },
       onSignalMenu(signal, item) {
         if (item.kind === 'open') { this.$emit('out-of-scope'); return; }
-        animateHeight(this.rowEl(signal), () => { this.st.removed[signal.id] = item.done; });
+        animateHeight(this.rowEl(signal), () => {
+          this.st.removed[signal.id] = item.done;
+          this.st.removedOrder.push(signal.id);
+        });
       },
       undoRemove(signal) {
-        animateHeight(this.rowEl(signal), () => { delete this.st.removed[signal.id]; });
+        animateHeight(this.rowEl(signal), () => {
+          delete this.st.removed[signal.id];
+          const i = this.st.removedOrder.lastIndexOf(signal.id);
+          if (i >= 0) this.st.removedOrder.splice(i, 1);
+        });
       },
       retryActivity() {
         this.st.activityStatus = 'loading';
@@ -163,10 +197,10 @@ window.ScreenOverview = (function () {
             <pm-card-header v-if="activeCount" :title="attentionTitle"></pm-card-header>
             <pm-all-clear-row v-else title="Требует внимания" :caption="allClearCaption"></pm-all-clear-row>
             <transition-group v-if="signals.length" name="list" tag="ul" class="list">
-              <li v-for="(s, i) in signals" :key="s.id" class="list__item" :data-signal="s.id"
-                :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isCollapsed(s, i) }" :inert="isCollapsed(s, i)">
+              <li v-for="s in signals" :key="s.id" class="list__item" :data-signal="s.id"
+                :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isCollapsed(s) }" :inert="isCollapsed(s)">
                 <div class="list__item-inner">
-                  <pm-hidden-signal-row v-if="st.removed[s.id]" :text="st.removed[s.id]" @undo="undoRemove(s)"></pm-hidden-signal-row>
+                  <pm-hidden-signal-row v-if="st.removed[s.id]" :text="hiddenText(s)" :undo-label="hiddenUndoLabel(s)" @undo="undoRemove(s)"></pm-hidden-signal-row>
                   <pm-signal-row v-else :signal="s" :tone="signalTone(s)" :class-label="classLabel(s.classId)" :reminded="!!st.reminded[s.id]"
                     :menu="menuOf(s)" @action="onSignalAction(s)" @menu="onSignalMenu(s, $event)"></pm-signal-row>
                 </div>
@@ -181,9 +215,10 @@ window.ScreenOverview = (function () {
             <section v-if="waitingSignals.length" class="signals-waiting" aria-labelledby="signals-waiting-title">
               <h3 id="signals-waiting-title" class="signals-waiting__title small text-secondary">{{ waitingTitle }}</h3>
               <transition-group name="fade" tag="ul" class="list">
-                <li v-for="s in waitingSignals" :key="s.id" class="list__item" :data-signal="s.id">
+                <li v-for="s in waitingSignals" :key="s.id" class="list__item" :data-signal="s.id"
+                  :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isWaitingCollapsed(s) }" :inert="isWaitingCollapsed(s)">
                   <div class="list__item-inner">
-                    <pm-hidden-signal-row v-if="st.removed[s.id]" :text="st.removed[s.id]" @undo="undoRemove(s)"></pm-hidden-signal-row>
+                    <pm-hidden-signal-row v-if="st.removed[s.id]" :text="hiddenText(s)" :undo-label="hiddenUndoLabel(s)" @undo="undoRemove(s)"></pm-hidden-signal-row>
                     <pm-signal-row v-else :signal="s" tone="neutral" :class-label="classLabel(s.classId)" reminded
                       :menu="menuOf(s)" @menu="onSignalMenu(s, $event)"></pm-signal-row>
                   </div>
