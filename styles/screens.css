@@ -1,0 +1,240 @@
+/* Экраны: оболочка (шапка, сайдбар, контент), сетка «Обзора» и «Класса», состав карточек.
+   Брейкпоинты: телефон до 767, планшет 768–1199, десктоп от 1200. */
+
+.app {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.app__body {
+  display: flex;
+  flex: 1;
+}
+
+.app__sidebar {
+  flex: none;
+}
+
+.app__content {
+  outline: none;
+  flex: 1;
+  width: 100%;
+  min-width: 0;
+  max-width: calc(var(--layout-content-max) + 2 * var(--layout-page-padding));
+  margin: 0 auto;
+  padding: var(--space-24) var(--layout-page-padding) var(--space-48);
+}
+
+.app__back {
+  display: none;
+  margin-bottom: var(--space-12);
+}
+
+.tabs {
+  margin: var(--space-24) 0;
+}
+
+/* Меню разделов на телефоне: тот же сайдбар в выдвижной панели */
+.drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 15;
+  display: none;
+}
+
+.drawer__backdrop {
+  position: absolute;
+  inset: 0;
+  background: var(--gray-900);
+  opacity: 0.4;
+}
+
+.drawer__panel {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  display: flex;
+}
+
+body.menu-open {
+  overflow: hidden;
+}
+
+/* --- Обзор ---------------------------------------------------------------- */
+
+.overview-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: var(--space-24);
+}
+
+.overview-grid__column-main,
+.overview-grid__column-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+  min-width: 0;
+}
+
+.overview-grid__column-main {
+  grid-column: span 8;
+}
+
+.overview-grid__column-side {
+  grid-column: span 4;
+}
+
+.card-next-lesson__when-row {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-16);
+  padding-bottom: var(--space-8);
+}
+
+.card-next-lesson__when {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-8);
+}
+
+.note-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+}
+
+.note-form__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.note-form__status > * {
+  justify-self: start;
+}
+
+.save-error {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-4);
+  color: var(--status-danger-text);
+}
+
+/* --- Класс ---------------------------------------------------------------- */
+
+.class-screen {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-24);
+}
+
+.class-row {
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-12);
+  overflow-x: auto;
+  /* место под рамку фокуса, чтобы прокрутка её не обрезала */
+  padding: var(--space-6);
+  margin: calc(-1 * var(--space-6));
+}
+
+.class-row__list {
+  display: flex;
+  gap: var(--space-12);
+}
+
+.class-row__add {
+  height: auto;
+  align-self: stretch;
+}
+
+.card-schedule {
+  gap: var(--space-24);
+}
+
+.card-schedule__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-16);
+}
+
+.card-schedule__timezone {
+  width: var(--size-select-timezone);
+}
+
+/* --- Планшет -------------------------------------------------------------- */
+@media (max-width: 1199px) {
+  .app__back {
+    display: inline-flex;
+  }
+
+  .profile-card__back {
+    display: none;
+  }
+
+  .overview-grid {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .overview-grid__column-main,
+  .overview-grid__column-side {
+    display: contents;
+  }
+
+  .card-attention { order: 1; }
+  .card-next-lesson { order: 2; }
+  .card-learning-30-days { order: 3; }
+  .card-activity { order: 4; }
+  .card-goal-and-note { order: 5; }
+
+  .card-next-lesson__when-row {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+/* --- Телефон -------------------------------------------------------------- */
+@media (max-width: 767px) {
+  .app__sidebar {
+    display: none;
+  }
+
+  .app__content {
+    padding-top: var(--space-16);
+  }
+
+  .drawer {
+    display: block;
+  }
+
+  .overview-grid {
+    gap: var(--space-16);
+  }
+
+  /* Урок в ближайшие два часа: карточка урока первой (кадр 03a) */
+  .overview-grid--lesson-soon .card-next-lesson {
+    order: 0;
+  }
+
+  .card-next-lesson__when-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .card-next-lesson__enter {
+    width: 100%;
+  }
+
+  .card-schedule__timezone {
+    width: 100%;
+  }
+}

@@ -1,0 +1,118 @@
+/* Базовые стили: сброс, шрифт, текстовые стили как классы, фокус. Значения только из tokens.css. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-page);
+  color: var(--text-primary);
+  font: var(--text-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+h1,
+h2,
+h3,
+p,
+ul,
+ol,
+figure {
+  margin: 0;
+}
+
+ul,
+ol {
+  padding: 0;
+  list-style: none;
+}
+
+a {
+  color: var(--accent-text);
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+button {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: inherit;
+}
+
+button:disabled {
+  cursor: default;
+}
+
+svg {
+  display: block;
+  flex: none;
+}
+
+/* Текстовые стили Figma. Класс называется так же, как стиль. */
+.display { font: var(--text-display); }
+.h1 { font: var(--text-h1); }
+.h2 { font: var(--text-h2); }
+.h3 { font: var(--text-h3); }
+.body { font: var(--text-body); }
+.body-strong { font: var(--text-body-strong); }
+.small { font: var(--text-small); }
+.small-strong { font: var(--text-small-strong); }
+.stat {
+  font: var(--text-stat);
+  font-variant-numeric: tabular-nums;
+}
+
+.text-secondary { color: var(--text-secondary); }
+.text-muted { color: var(--text-muted); }
+
+/* Фокус: рамка 2 px акцентом снаружи с отступом 4, как слой focus-ring в Figma */
+:focus-visible {
+  outline: 2px solid var(--accent-default);
+  outline-offset: var(--space-4);
+}
+
+/* Только для скринридера: подписи у иконок-кнопок */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Разделитель между строками списков: прямоугольник 1 px border/default, как на экранах */
+.divider {
+  height: 1px;
+  background: var(--border-default);
+  flex: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition: none !important;
+    animation: none !important;
+  }
+}

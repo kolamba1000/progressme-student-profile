@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Профиль ученика · демо · ProgressMe</title>
+  <meta name="description" content="Список экранов и состояний демо профиля ученика: вкладки «Обзор» и «Класс» на трёх размерах">
+  <link rel="stylesheet" href="vendor/fonts/inter.css">
+  <link rel="stylesheet" href="styles/tokens.css">
+  <link rel="stylesheet" href="styles/base.css">
+  <link rel="stylesheet" href="styles/components.css">
+  <link rel="stylesheet" href="styles/index.css">
+</head>
+<body>
+  <main class="index">
+    <header class="index__header">
+      <span class="logo" id="logo"></span>
+      <h1 class="display">Профиль ученика · демо</h1>
+      <p class="body text-secondary">
+        Два экрана профиля ученика для учителя, собранные в&nbsp;коде по&nbsp;макетам из&nbsp;Figma: вкладки «Обзор» и&nbsp;«Класс»
+        на&nbsp;десктопе, планшете и&nbsp;телефоне. Данные вымышленные, бэкенда нет: действия меняют данные в&nbsp;памяти страницы,
+        перезагрузка возвращает исходные. Чтобы увидеть планшет и&nbsp;телефон, откройте ссылку на&nbsp;устройстве или сузьте окно
+      </p>
+    </header>
+
+    <section class="index__section" aria-labelledby="overview-title">
+      <h2 class="h2" id="overview-title">Обзор</h2>
+      <ul class="index__list">
+        <li class="index__item">
+          <a class="index__link body-strong" href="profile.html#/overview">По&nbsp;умолчанию</a>
+          <span class="small text-secondary">Пять сигналов, урок завтра, показатели, события, заметка</span>
+        </li>
+        <li class="index__item">
+          <a class="index__link body-strong" href="profile.html#/overview?expanded=1">Все сигналы раскрыты</a>
+          <span class="small text-secondary">То&nbsp;же, что «Показать ещё&nbsp;2» на&nbsp;экране по&nbsp;умолчанию</span>
+        </li>
+        <li class="index__item">
+          <a class="index__link body-strong" href="profile.html#/overview?scenario=all-clear">Нет сигналов</a>
+          <span class="small text-secondary">Карточка «Требует внимания» сжата в&nbsp;строку, блоки ниже поднялись</span>
+        </li>
+        <li class="index__item">
+          <a class="index__link body-strong" href="profile.html#/overview?scenario=new-student">Новый ученик</a>
+          <span class="small text-secondary">Один класс, уроков не&nbsp;было: пустые состояния с&nbsp;первым действием, подсказки в&nbsp;полях</span>
+        </li>
+        <li class="index__item">
+          <a class="index__link body-strong" href="profile.html#/overview?scenario=errors">Ошибки</a>
+          <span class="small text-secondary">Активность не&nbsp;загрузилась, заметка не&nbsp;сохранилась; «Повторить» в&nbsp;обоих случаях удаётся</span>
+        </li>
+        <li class="index__item">
+          <a class="index__link body-strong" href="profile.html#/overview?scenario=lesson-soon">Урок скоро</a>
+          <span class="small text-secondary">«Сегодня, 18:00–19:00» и&nbsp;метка «Через 40&nbsp;мин»; на&nbsp;телефоне карточка урока идёт первой</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="index__section" aria-labelledby="class-title">
+      <h2 class="h2" id="class-title">Класс</h2>
+      <ul class="index__list">
+        <li class="index__item">
+          <a class="index__link body-strong" href="profile.html#/class/english-group">English Group</a>
+          <span class="small text-secondary">Групповой класс, расписание недели 5–11&nbsp;октября: проведённый урок во&nbsp;вторник, запланированный в&nbsp;субботу</span>
+        </li>
+        <li class="index__item">
+          <a class="index__link body-strong" href="profile.html#/class/english-individual">English Individual</a>
+          <span class="small text-secondary">Индивидуальный класс; на&nbsp;прошлой неделе неявка, на&nbsp;следующей урок полтора часа</span>
+        </li>
+      </ul>
+    </section>
+
+    <section class="index__section" aria-labelledby="actions-title">
+      <h2 class="h2" id="actions-title">Что можно сделать на&nbsp;экранах</h2>
+      <ul class="index__bullets body">
+        <li>Вкладки «Обзор» и&nbsp;«Класс» и&nbsp;имена классов в&nbsp;карточке профиля ведут между экранами; «Назад» возвращает сюда</li>
+        <li>«Показать ещё&nbsp;2» раскрывает список сигналов, «Свернуть» прячет</li>
+        <li>«Напомнить об&nbsp;оплате» и&nbsp;«Напомнить о&nbsp;сдаче» ставят у&nbsp;сигнала метку «Напомнили»</li>
+        <li>Правка цели или заметки включает «Сохранить»; если в&nbsp;тексте есть слово «ошибка», сохранение не&nbsp;удаётся и&nbsp;появляется «Повторить»</li>
+        <li>На&nbsp;«Классе» переключается неделя и&nbsp;часовой пояс: на&nbsp;прошлой неделе видна неявка, на&nbsp;следующей&nbsp;— уроки без оплаты</li>
+        <li>На&nbsp;телефоне разделы открываются из&nbsp;меню ☰, расписание показано списком по&nbsp;дням</li>
+        <li>Кнопки и&nbsp;ссылки на&nbsp;экраны вне объёма (статистика, вход в&nbsp;класс, проверка работы) показывают уведомление</li>
+      </ul>
+    </section>
+
+    <footer class="index__footer small text-muted">
+      <p>Макеты и&nbsp;дизайн-система: <a class="index__footer-link" href="https://www.figma.com/design/4SQeBxa2lSsP1ZVSeulx6o/">файл в&nbsp;Figma</a>.
+        Код: Vue&nbsp;3 без сборки, шрифт Inter, иконки Lucide</p>
+    </footer>
+  </main>
+
+  <script src="components/logo.js"></script>
+  <script>
+    document.getElementById('logo').innerHTML = window.LOGO_SVG;
+  </script>
+</body>
+</html>

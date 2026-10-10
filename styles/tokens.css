@@ -1,0 +1,162 @@
+/* Токены. Переменные Figma один в один: text/primary → --text-primary.
+   Три коллекции Figma: Primitives (палитра), Semantic (роли, ссылаются на палитру),
+   Layout (отступы, радиусы, размеры; режимы desktop / tablet / mobile задаются медиазапросами ниже).
+   Компоненты используют только семантические переменные и Layout, примитивы — никогда напрямую. */
+
+:root {
+  /* Primitives */
+  --gray-0: #ffffff;
+  --gray-50: #f6f7f9;
+  --gray-100: #eef0f3;
+  --gray-200: #e3e6eb;
+  --gray-400: #8a91a0;
+  --gray-500: #6e7684;
+  --gray-600: #5b6270;
+  --gray-700: #4a5160;
+  --gray-900: #1a1d23;
+  --blue-50: #eaf2fd;
+  --blue-600: #2468cc;
+  --blue-700: #1d53a6;
+  --green-50: #e6f5ec;
+  --green-600: #1e8a4c;
+  --green-700: #1a7b43;
+  --green-800: #166b3a;
+  --amber-50: #fff4e0;
+  --amber-600: #b86e00;
+  --amber-800: #8a5200;
+  --red-50: #fdecec;
+  --red-600: #d13b3b;
+  --red-800: #a62b2b;
+  --violet-50: #eee9fa;
+  --violet-600: #6f4bd8;
+  --pink-50: #f8e7ef;
+  --pink-600: #c2367a;
+  --teal-50: #e2f3f4;
+  --teal-600: #0e9aa3;
+
+  /* Semantic · фон */
+  --bg-page: var(--gray-50);
+  --bg-surface: var(--gray-0);
+  --bg-subtle: var(--gray-100);
+
+  /* Semantic · граница */
+  --border-default: var(--gray-200);
+  --border-strong: var(--gray-400);
+
+  /* Semantic · текст */
+  --text-primary: var(--gray-900);
+  --text-secondary: var(--gray-600);
+  --text-muted: var(--gray-500);
+  --text-placeholder: var(--gray-400);
+  --text-on-accent: var(--gray-0);
+
+  /* Semantic · акцент */
+  --accent-default: var(--blue-600);
+  --accent-hover: var(--blue-700);
+  --accent-bg: var(--blue-50);
+  --accent-text: var(--blue-700);
+
+  /* Semantic · статусы */
+  --status-success-bg: var(--green-50);
+  --status-success-text: var(--green-800);
+  --status-success-icon: var(--green-600);
+  --status-warning-bg: var(--amber-50);
+  --status-warning-text: var(--amber-800);
+  --status-warning-icon: var(--amber-600);
+  --status-danger-bg: var(--red-50);
+  --status-danger-text: var(--red-800);
+  --status-danger-icon: var(--red-600);
+  --status-info-bg: var(--blue-50);
+  --status-info-text: var(--blue-700);
+  --status-info-icon: var(--blue-600);
+  --status-neutral-bg: var(--gray-100);
+  --status-neutral-text: var(--gray-700);
+  --status-neutral-icon: var(--gray-700);
+
+  /* Semantic · цвета классов */
+  --class-green-fg: var(--green-700);
+  --class-green-bg: var(--green-50);
+  --class-violet-fg: var(--violet-600);
+  --class-violet-bg: var(--violet-50);
+  --class-pink-fg: var(--pink-600);
+  --class-pink-bg: var(--pink-50);
+  --class-amber-fg: var(--amber-600);
+  --class-amber-bg: var(--amber-50);
+  --class-teal-fg: var(--teal-600);
+  --class-teal-bg: var(--teal-50);
+
+  /* Layout · режим desktop */
+  --space-2: 2px;
+  --space-4: 4px;
+  --space-6: 6px;
+  --space-8: 8px;
+  --space-12: 12px;
+  --space-16: 16px;
+  --space-20: 20px;
+  --space-24: 24px;
+  --space-32: 32px;
+  --space-40: 40px;
+  --space-48: 48px;
+  --space-card: 24px;
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-full: 999px;
+  --size-icon-s: 16px;
+  --size-icon-m: 20px;
+  --size-control: 40px;
+  --layout-header: 56px;
+  --layout-sidebar: 72px;
+  --layout-content-max: 1240px;
+  --layout-hour: 48px;
+  --bp-desktop: 1440px;
+  --bp-tablet: 834px;
+  --bp-mobile: 390px;
+
+  /* Текстовые стили Figma (размер / интерлиньяж, начертание) */
+  --font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --text-display: 600 28px/36px var(--font-family);
+  --text-h1: 600 22px/28px var(--font-family);
+  --text-h2: 600 18px/24px var(--font-family);
+  --text-h3: 600 16px/22px var(--font-family);
+  --text-body: 400 15px/22px var(--font-family);
+  --text-body-strong: 500 15px/22px var(--font-family);
+  --text-small: 400 13px/18px var(--font-family);
+  --text-small-strong: 500 13px/18px var(--font-family);
+  --text-stat: 600 20px/28px var(--font-family);
+
+  /* Тени: только для всплывающих слоёв, карточки с границей и без тени */
+  --shadow-popover: 0 8px 24px rgba(26, 29, 35, 0.12), 0 1px 2px rgba(26, 29, 35, 0.08);
+
+  /* Движение: короткое и спокойное, только там, где объясняет смену состояния (D-76).
+     fast — наведение и фокус; base — появление и исчезание; slow — раскрытие списка и выдвижная панель;
+     reorder — переезд строки на новое место в списке. ease — выход (ease-out) для появления,
+     ease-in-out — для перемещения на экране, чтобы строка трогалась и останавливалась мягко */
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 250ms;
+  --motion-reorder: 450ms;
+  --motion-ease: cubic-bezier(0.2, 0, 0, 1);
+  --motion-ease-in-out: cubic-bezier(0.45, 0, 0.15, 1);
+
+  /* Служебные: зона нажатия на тач-экранах и ширины контента по размерам */
+  --size-touch: 44px;
+  --layout-page-padding: 32px;
+}
+
+/* Режим Layout = tablet: 768–1199 */
+@media (max-width: 1199px) {
+  :root {
+    --size-control: 44px;
+    --space-card: 20px;
+    --layout-page-padding: 24px;
+  }
+}
+
+/* Режим Layout = mobile: до 767 */
+@media (max-width: 767px) {
+  :root {
+    --space-card: 16px;
+    --layout-page-padding: 16px;
+  }
+}
