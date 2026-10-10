@@ -423,7 +423,7 @@
   components['pm-class-header'] = {
     props: { cls: { type: Object, required: true } },
     emits: ['out-of-scope'],
-    computed: { caption() { return this.cls.type + F.NBSP + '· ' + F.countStudents(this.cls.students); } },
+    computed: { caption() { return this.cls.type + F.NBSP + '·' + F.NBSP + F.countStudents(this.cls.students); } },
     template: `<div class="class-header">
       <pm-class-avatar :color="cls.color" size="l" :initial="cls.initial"></pm-class-avatar>
       <div class="class-header__name">
