@@ -611,6 +611,8 @@
   justify-self: end;
 }
 
+/* Высота подписи равна высоте кнопки на всех размерах: иначе при смене кнопки на подпись
+   строка сначала теряет высоту и только потом складывается (замечание 10 октября) */
 .signal-row__done {
   display: inline-flex;
   align-items: center;
@@ -632,10 +634,6 @@
   .signal-row__action,
   .signal-row__action > * {
     justify-self: start;
-  }
-
-  .signal-row__done {
-    height: auto;
   }
 }
 
