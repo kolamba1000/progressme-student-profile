@@ -245,4 +245,14 @@ body.menu-open {
   .card-schedule__timezone {
     width: 100%;
   }
+
+  /* Переключатель недели во всю ширину, как поле пояса под ним: два поля в столбик одной ширины */
+  .card-schedule__toolbar .week-switcher {
+    display: flex;
+    width: 100%;
+  }
+
+  .card-schedule__toolbar .week-switcher__range {
+    flex: 1;
+  }
 }
