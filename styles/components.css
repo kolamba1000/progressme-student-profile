@@ -934,6 +934,21 @@
   background: var(--border-default);
 }
 
+/* Кнопки внутри рамки: высота по внутренней области, скругление только у внешних углов, на 1 px меньше радиуса рамки */
+.week-switcher .icon-button {
+  align-self: stretch;
+  height: auto;
+  border-radius: 0;
+}
+
+.week-switcher .icon-button:first-child {
+  border-radius: calc(var(--radius-md) - 1px) 0 0 calc(var(--radius-md) - 1px);
+}
+
+.week-switcher .icon-button:last-child {
+  border-radius: 0 calc(var(--radius-md) - 1px) calc(var(--radius-md) - 1px) 0;
+}
+
 /* Ширина подписи по самой длинной неделе («30 ноя – 6 дек»), чтобы кнопки не уезжали при переключении */
 .week-switcher__range {
   min-width: var(--size-week-range);
