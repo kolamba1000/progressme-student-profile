@@ -159,9 +159,9 @@
   };
 
   components['pm-menu-item'] = {
-    props: { label: { type: String, required: true }, selected: Boolean },
+    props: { label: { type: String, required: true }, selected: Boolean, role: { type: String, default: 'option' } },
     emits: ['select'],
-    template: `<button type="button" class="menu-item" :class="{ 'menu-item--selected': selected }" role="option" :aria-selected="selected"
+    template: `<button type="button" class="menu-item" :class="{ 'menu-item--selected': selected }" :role="role" :aria-selected="role === 'option' ? selected : null"
       @click="$emit('select')">
       <span class="menu-item__label body">{{ label }}</span>
       <pm-icon v-if="selected" name="check"></pm-icon>
@@ -260,14 +260,80 @@
     </div>`,
   };
 
+  // Меню «⋯» у сигнала: действия, которые чинят данные, и «Скрыть» (D-80). Кнопка видна всегда:
+  // на планшете и телефоне наведения нет. Список выносится в body поверх страницы: строки сигналов обрезают
+  // содержимое ради анимации складывания. Закрывается по Esc, Tab, клику мимо, прокрутке и после выбора;
+  // фокус возвращается на кнопку
+  components['pm-signal-menu'] = {
+    props: { items: { type: Array, required: true } },
+    emits: ['choose'],
+    data() { return { open: false, pos: {} }; },
+    mounted() { document.addEventListener('click', this.onDocumentClick); },
+    beforeUnmount() { this.unbind(); document.removeEventListener('click', this.onDocumentClick); },
+    methods: {
+      onDocumentClick(e) {
+        if (!this.open) return;
+        if (this.$el.contains(e.target) || (this.$refs.menu && this.$refs.menu.$el.contains(e.target))) return;
+        this.open = false; this.unbind();
+      },
+      place() {
+        const r = this.$refs.button.getBoundingClientRect();
+        const gutter = 16;
+        const width = this.$refs.menu ? this.$refs.menu.$el.offsetWidth : 288;
+        const left = Math.max(gutter, Math.min(r.right - width, window.innerWidth - width - gutter));
+        this.pos = { top: r.bottom + 4 + 'px', left: left + 'px' };
+      },
+      onScroll() { this.open = false; this.unbind(); },
+      unbind() { window.removeEventListener('scroll', this.onScroll, true); window.removeEventListener('resize', this.onScroll); },
+      toggle() {
+        if (this.open) { this.open = false; this.unbind(); return; }
+        this.place();
+        this.open = true;
+        window.addEventListener('scroll', this.onScroll, true);
+        window.addEventListener('resize', this.onScroll);
+        this.$nextTick(() => { this.place(); const first = this.$refs.menu && this.$refs.menu.$el.querySelector('.menu-item'); if (first) first.focus(); });
+      },
+      close() { this.open = false; this.unbind(); this.$refs.button.focus(); },
+      choose(item) { this.close(); this.$emit('choose', item); },
+      move(step) {
+        const items = Array.from(this.$refs.menu.$el.querySelectorAll('.menu-item'));
+        const i = items.indexOf(document.activeElement);
+        items[(i + step + items.length) % items.length].focus();
+      },
+    },
+    template: `<div class="signal-menu">
+      <button type="button" ref="button" class="icon-button icon-button--ghost" aria-label="Действия с сигналом" title="Действия с сигналом"
+        aria-haspopup="menu" :aria-expanded="open" @click="toggle" @keydown.esc="open && close()"><pm-icon name="ellipsis"></pm-icon></button>
+      <teleport to="body">
+        <transition name="pop">
+          <pm-dropdown-menu v-if="open" ref="menu" class="dropdown-menu--floating" role="menu" aria-label="Действия с сигналом" :style="pos"
+            @keydown.esc.stop="close" @keydown.tab.prevent="close" @keydown.down.prevent="move(1)" @keydown.up.prevent="move(-1)">
+            <pm-menu-item v-for="item in items" :key="item.label" role="menuitem" :label="item.label" @select="choose(item)"></pm-menu-item>
+          </pm-dropdown-menu>
+        </transition>
+      </teleport>
+    </div>`,
+  };
+
+  // На месте скрытого сигнала до ухода со страницы: что произошло и «Отменить»
+  components['pm-hidden-signal-row'] = {
+    props: { text: { type: String, required: true } },
+    emits: ['undo'],
+    template: `<div class="hidden-signal-row" role="status">
+      <span class="body text-secondary">{{ text }}</span>
+      <pm-link @click="$emit('undo')">Отменить</pm-link>
+    </div>`,
+  };
+
   components['pm-signal-row'] = {
     props: {
       signal: { type: Object, required: true },
       tone: { type: String, default: 'neutral' },
       classLabel: String,
       reminded: Boolean,
+      menu: { type: Array, default: () => [] },
     },
-    emits: ['action'],
+    emits: ['action', 'menu'],
     template: `<div class="signal-row" :class="'signal-row--' + tone">
       <span class="signal-row__icon-circle"><pm-icon :name="signal.icon" size="s"></pm-icon></span>
       <p class="signal-row__text body-strong">{{ signal.text }}<span v-if="classLabel" class="signal-row__class">&nbsp;·&nbsp;{{ classLabel }}</span></p>
@@ -279,6 +345,7 @@
           <pm-button v-else key="action" class="signal-row__button" variant="secondary" @click="$emit('action')">{{ signal.action.label }}</pm-button>
         </transition>
       </span>
+      <pm-signal-menu v-if="menu.length" class="signal-row__menu" :items="menu" @choose="$emit('menu', $event)"></pm-signal-menu>
     </div>`,
   };
 

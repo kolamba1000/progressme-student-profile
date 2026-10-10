@@ -9,10 +9,33 @@ window.ScreenOverview = (function () {
   // Пауза после «Напоминание отправлено», чтобы метку успели прочитать, и длительность складывания строки
   const SETTLE_MS = 900;
   const COLLAPSE_MS = 300;
+  const HIDE_ITEM = { label: 'Скрыть', kind: 'hide', done: 'Сигнал скрыт' };
+  const reducedMotion = () => window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  // Плавная смена высоты строки, когда её содержимое меняется на месте (сигнал → «Сигнал скрыт» и обратно)
+  function animateHeight(el, mutate, done) {
+    if (!el || reducedMotion()) { mutate(); if (done) done(); return; }
+    const from = el.getBoundingClientRect().height;
+    mutate();
+    requestAnimationFrame(() => {
+      const to = el.getBoundingClientRect().height;
+      if (Math.abs(to - from) < 1) { if (done) done(); return; }
+      el.style.height = from + 'px';
+      el.style.overflow = 'hidden';
+      el.getBoundingClientRect();
+      el.style.transition = 'height var(--motion-slow) var(--motion-ease)';
+      el.style.height = to + 'px';
+      el.addEventListener('transitionend', () => { el.style.height = ''; el.style.overflow = ''; el.style.transition = ''; if (done) done(); }, { once: true });
+    });
+  }
 
   return {
     props: { state: { type: Object, required: true } },
     emits: ['out-of-scope'],
+    // Скрытые на этом заходе сигналы после ухода со страницы больше не показываются, подпись «Сигнал скрыт» исчезает
+    beforeUnmount() {
+      Object.keys(this.st.removed).forEach((id) => { this.st.gone[id] = true; delete this.st.removed[id]; });
+    },
     computed: {
       st() { return this.state; },
       classById() {
@@ -23,20 +46,22 @@ window.ScreenOverview = (function () {
       // Хвост класса показывается, только если у ученика больше одного класса
       showClassTails() { return this.st.classes.length > 1; },
 
-      // Сигналы: сначала те, что ждут действия учителя, обработанные (напоминание отправлено) уходят вниз (D-74).
-      // Перестановка происходит не сразу: в раскрытом списке — переезд после паузы, в свёрнутом — строка
-      // сначала складывается на месте и уходит под «Показать ещё» уже невидимой, без рывка
-      signals() {
-        const settled = this.st.settled;
-        return this.st.signals.filter((s) => !settled[s.id]).concat(this.st.signals.filter((s) => settled[s.id]));
-      },
+      // Сигналы (D-80): основной список — то, что ждёт действия учителя, и подписи «Сигнал скрыт» на месте скрытых;
+      // после «Напомнить» сигнал складывается на месте и переезжает в группу «Ждут ответа» под списком.
+      // Счётчик и «Показать ещё» считают только ждущие действия
+      visibleSignals() { return this.st.signals.filter((s) => !this.st.gone[s.id]); },
+      signals() { return this.visibleSignals.filter((s) => !this.st.settled[s.id]); },
+      waitingSignals() { return this.visibleSignals.filter((s) => this.st.settled[s.id]); },
+      activeCount() { return this.visibleSignals.filter((s) => !this.st.reminded[s.id] && !this.st.removed[s.id]).length; },
+      firstActiveId() { const s = this.signals.find((x) => !this.st.reminded[x.id] && !this.st.removed[x.id]); return s ? s.id : null; },
       signalsCollapsible() { return this.signals.length > VISIBLE_SIGNALS + 1; },
       // Все сигналы остаются в разметке; скрытые схлопываются CSS-переходом и получают inert
       isCollapsed() {
         return (signal, index) => (this.signalsCollapsible && !this.st.signalsExpanded && index >= VISIBLE_SIGNALS) || !!this.st.collapsing[signal.id];
       },
       hiddenCount() { return this.signals.length - VISIBLE_SIGNALS; },
-      attentionTitle() { return F.typo('Требует внимания · ' + this.signals.length); },
+      attentionTitle() { return F.typo('Требует внимания · ' + this.activeCount); },
+      waitingTitle() { return F.typo('Ждут ответа · ' + this.waitingSignals.length); },
       allClearCaption() {
         return this.st.isNew ? F.typo('Сигналы появятся после первого урока') : F.typo('Сейчас ничего не требует действий');
       },
@@ -82,17 +107,26 @@ window.ScreenOverview = (function () {
     },
     methods: {
       classLabel(classId) { return this.showClassTails && this.classById[classId] ? this.classById[classId].name : null; },
-      signalTone(signal, index) { return index === 0 && !this.st.reminded[signal.id] ? signal.tone : 'neutral'; },
+      signalTone(signal) { return signal.id === this.firstActiveId ? signal.tone : 'neutral'; },
+      menuOf(signal) { return (signal.menu || []).concat([HIDE_ITEM]); },
+      // «Напомнить»: метка на месте кнопки, счётчик сразу меньше; через паузу строка складывается и переезжает в «Ждут ответа»
       onSignalAction(signal) {
         if (signal.action.kind !== 'remind') { this.$emit('out-of-scope'); return; }
         const st = this.st;
         st.reminded[signal.id] = true;
         setTimeout(() => {
-          const hidden = this.signalsCollapsible && !st.signalsExpanded;
-          if (!hidden) { st.settled[signal.id] = true; return; }
+          if (st.settled[signal.id] || st.removed[signal.id]) return;
           st.collapsing[signal.id] = true;
-          setTimeout(() => { st.settled[signal.id] = true; delete st.collapsing[signal.id]; }, COLLAPSE_MS);
+          setTimeout(() => { st.settled[signal.id] = true; delete st.collapsing[signal.id]; }, reducedMotion() ? 0 : COLLAPSE_MS);
         }, SETTLE_MS);
+      },
+      rowEl(signal) { return this.$el.querySelector('[data-signal="' + signal.id + '"]'); },
+      onSignalMenu(signal, item) {
+        if (item.kind === 'open') { this.$emit('out-of-scope'); return; }
+        animateHeight(this.rowEl(signal), () => { this.st.removed[signal.id] = item.done; });
+      },
+      undoRemove(signal) {
+        animateHeight(this.rowEl(signal), () => { delete this.st.removed[signal.id]; });
       },
       retryActivity() {
         this.st.activityStatus = 'loading';
@@ -125,13 +159,16 @@ window.ScreenOverview = (function () {
       <div class="overview-grid__column-main">
 
         <pm-card class="card-attention" label="Требует внимания">
-          <template v-if="signals.length">
-            <pm-card-header :title="attentionTitle"></pm-card-header>
-            <transition-group name="list" tag="ul" class="list">
-              <li v-for="(s, i) in signals" :key="s.id" class="list__item"
-                :class="{ 'list__item--collapsible': signalsCollapsible, 'list__item--collapsed': isCollapsed(s, i) }" :inert="isCollapsed(s, i)">
+          <template v-if="visibleSignals.length">
+            <pm-card-header v-if="activeCount" :title="attentionTitle"></pm-card-header>
+            <pm-all-clear-row v-else title="Требует внимания" :caption="allClearCaption"></pm-all-clear-row>
+            <transition-group v-if="signals.length" name="list" tag="ul" class="list">
+              <li v-for="(s, i) in signals" :key="s.id" class="list__item" :data-signal="s.id"
+                :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isCollapsed(s, i) }" :inert="isCollapsed(s, i)">
                 <div class="list__item-inner">
-                  <pm-signal-row :signal="s" :tone="signalTone(s, i)" :class-label="classLabel(s.classId)" :reminded="!!st.reminded[s.id]" @action="onSignalAction(s)"></pm-signal-row>
+                  <pm-hidden-signal-row v-if="st.removed[s.id]" :text="st.removed[s.id]" @undo="undoRemove(s)"></pm-hidden-signal-row>
+                  <pm-signal-row v-else :signal="s" :tone="signalTone(s)" :class-label="classLabel(s.classId)" :reminded="!!st.reminded[s.id]"
+                    :menu="menuOf(s)" @action="onSignalAction(s)" @menu="onSignalMenu(s, $event)"></pm-signal-row>
                 </div>
               </li>
               <li v-if="signalsCollapsible" key="footer" class="list__item list__item--footer">
@@ -141,6 +178,18 @@ window.ScreenOverview = (function () {
                 </pm-link>
               </li>
             </transition-group>
+            <section v-if="waitingSignals.length" class="signals-waiting" aria-labelledby="signals-waiting-title">
+              <h3 id="signals-waiting-title" class="signals-waiting__title small text-secondary">{{ waitingTitle }}</h3>
+              <transition-group name="fade" tag="ul" class="list">
+                <li v-for="s in waitingSignals" :key="s.id" class="list__item" :data-signal="s.id">
+                  <div class="list__item-inner">
+                    <pm-hidden-signal-row v-if="st.removed[s.id]" :text="st.removed[s.id]" @undo="undoRemove(s)"></pm-hidden-signal-row>
+                    <pm-signal-row v-else :signal="s" tone="neutral" :class-label="classLabel(s.classId)" reminded
+                      :menu="menuOf(s)" @menu="onSignalMenu(s, $event)"></pm-signal-row>
+                  </div>
+                </li>
+              </transition-group>
+            </section>
           </template>
           <pm-all-clear-row v-else title="Требует внимания" :caption="allClearCaption"></pm-all-clear-row>
         </pm-card>

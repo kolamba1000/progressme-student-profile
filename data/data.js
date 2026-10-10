@@ -63,11 +63,16 @@ window.DATA = {
   // Сигналы «Требует внимания» в порядке срочности. tone — цвет типа; на экране его получает
   // только первый необработанный сигнал, остальные рисуются нейтральными (D-42). action.kind: remind — после нажатия метка «Напомнили»,
   // open — переход на экран вне объёма демо.
+  // menu — действия в «⋯», которые чинят данные: после resolve причина ушла, сигнал уходит сам,
+  // на его месте подпись done и «Отменить»; open — экран вне объёма демо. «Скрыть» добавляется ко всем (D-80)
   signals: [
-    { id: 'payment', icon: 'wallet', tone: 'warning', text: 'Остался 1 оплаченный урок', classId: 'english-group', action: { label: 'Напомнить об оплате', kind: 'remind' } },
+    { id: 'payment', icon: 'wallet', tone: 'warning', text: 'Остался 1 оплаченный урок', classId: 'english-group', action: { label: 'Напомнить об оплате', kind: 'remind' },
+      menu: [{ label: 'Отметить оплату вне платформы', kind: 'resolve', done: 'Оплата отмечена' }] },
     { id: 'homework-check', icon: 'clipboard-check', tone: 'warning', text: 'Домашняя работа к уроку 14B ждёт проверки 3 дня', classId: 'english-group', action: { label: 'Проверить', kind: 'open' } },
-    { id: 'homework-overdue', icon: 'alarm-clock', tone: 'danger', text: 'Домашняя работа к уроку 14A просрочена на 2 дня', classId: 'english-group', action: { label: 'Напомнить о сдаче', kind: 'remind' } },
-    { id: 'missed-lesson', icon: 'user-x', tone: 'danger', text: 'Пропуск урока 2 окт', classId: 'english-individual', action: { label: 'Написать', kind: 'open' } },
+    { id: 'homework-overdue', icon: 'alarm-clock', tone: 'danger', text: 'Домашняя работа к уроку 14A просрочена на 2 дня', classId: 'english-group', action: { label: 'Напомнить о сдаче', kind: 'remind' },
+      menu: [{ label: 'Перенести срок', kind: 'open' }, { label: 'Отменить домашнюю работу', kind: 'resolve', done: 'Домашняя работа отменена' }] },
+    { id: 'missed-lesson', icon: 'user-x', tone: 'danger', text: 'Пропуск урока 2 окт', classId: 'english-individual', action: { label: 'Написать', kind: 'open' },
+      menu: [{ label: 'Пропуск по уважительной причине', kind: 'resolve', done: 'Пропуск отмечен уважительным' }] },
     { id: 'errors-topic', icon: 'circle-alert', tone: 'warning', text: 'Много ошибок в теме Present Perfect', classId: 'english-group', action: { label: 'Посмотреть', kind: 'open' } },
   ],
 
@@ -120,6 +125,11 @@ window.DATA = {
     errors: {
       title: 'Ошибки',
       failures: { activity: 1, noteSave: 1 },
+    },
+    // Напоминание об оплате отправлено 3 дня назад, оплаты нет: сигнал вернулся первым с цветом (кадр 01f, D-80)
+    'no-answer': {
+      title: 'Ответа нет 3 дня',
+      signalOverrides: { payment: { text: 'Напомнили 3 дня назад, оплаты нет', action: { label: 'Напомнить ещё раз', kind: 'remind' } } },
     },
     'lesson-soon': {
       title: 'Урок скоро',

@@ -15,6 +15,8 @@
   --size-activity-time: 112px;
   --size-class-card: 240px;
   --size-time-column: 56px;
+  --size-signal-menu: 288px;
+  --line-body: 22px;
   --size-week-range: 140px;
   --size-logo-m-width: 151px;
   --size-logo-m-height: 26px;
@@ -537,13 +539,15 @@
 
 /* Свёрнутые строки списка сигналов остаются в разметке и плавно схлопываются
    (grid-template-rows 1fr → 0fr), так карточка меняет высоту без прыжка. Свёрнутая строка
-   получает атрибут inert и выпадает из порядка фокуса и дерева доступности */
+   получает атрибут inert и выпадает из порядка фокуса и дерева доступности.
+   Отступы строки внутри обрезаемой области: так кнопка «⋯» на планшете и телефоне, выступающая
+   над первой строкой текста, не обрезается, а при складывании отступы уходят вместе со строкой */
 .list__item--collapsible {
   display: grid;
   grid-template-rows: 1fr;
+  padding: 0;
   transition:
     grid-template-rows var(--motion-slow) var(--motion-ease),
-    padding var(--motion-slow) var(--motion-ease),
     opacity var(--motion-base) var(--motion-ease),
     border-bottom-width var(--motion-slow) var(--motion-ease);
 }
@@ -551,20 +555,29 @@
 .list__item--collapsible > .list__item-inner {
   min-height: 0;
   overflow: hidden;
+  padding: var(--space-16) 0;
+  transition: padding var(--motion-slow) var(--motion-ease);
+}
+
+.list__item--collapsible:last-child > .list__item-inner {
+  padding-bottom: 0;
 }
 
 .list__item--collapsed {
   grid-template-rows: 0fr;
-  padding-top: 0;
-  padding-bottom: 0;
   border-bottom-width: 0;
   opacity: 0;
 }
 
+.list__item--collapsed > .list__item-inner {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
 .signal-row {
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
-  grid-template-areas: 'icon text button';
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  grid-template-areas: 'icon text button menu';
   align-items: center;
   column-gap: var(--space-16);
   row-gap: var(--space-8);
@@ -597,9 +610,11 @@
   grid-area: text;
 }
 
+/* Хвост с классом не рвётся между словами («English» / «Group»), переносится целиком */
 .signal-row__class,
 .activity-item__class {
   color: var(--text-secondary);
+  white-space: nowrap;
 }
 
 .signal-row__action {
@@ -620,15 +635,66 @@
   height: var(--size-control);
 }
 
-/* size=narrow: кнопка под текстом. Ниже 1280 колонка сигналов слишком узка для строки «текст + кнопка» */
+/* Меню «⋯» (D-80): последний столбец строки, на десктопе вровень с кнопкой */
+.signal-row__menu {
+  grid-area: menu;
+}
+
+.signal-menu {
+  position: relative;
+}
+
+/* Меню вынесено в body и стоит по координатам кнопки */
+.dropdown-menu--floating {
+  position: fixed;
+  right: auto;
+  min-width: var(--size-signal-menu);
+  max-width: calc(100vw - 2 * var(--space-16));
+}
+
+.dropdown-menu--floating .menu-item {
+  height: auto;
+  min-height: var(--size-control);
+  white-space: normal;
+}
+
+/* На месте скрытого сигнала: подпись и «Отменить», высотой с кнопку, чтобы строка не прыгала */
+.hidden-signal-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  column-gap: var(--space-12);
+  min-height: var(--size-control);
+}
+
+/* Группа «Ждут ответа» под основным списком: отделена линией, как строки списка */
+.signals-waiting {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-16);
+  padding-top: var(--space-16);
+  border-top: 1px solid var(--border-default);
+}
+
+.signals-waiting__title {
+  margin: 0;
+}
+
+/* size=narrow: кнопка под текстом, «⋯» справа от первой строки текста.
+   Ниже 1280 колонка сигналов слишком узка для строки «текст + кнопка» */
 @media (max-width: 1279px) {
   .signal-row {
-    grid-template-columns: auto minmax(0, 1fr);
+    grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
-      'icon text'
-      'icon button';
+      'icon text menu'
+      'icon button button';
     align-items: start;
     column-gap: var(--space-12);
+  }
+
+  /* «⋯» по центру первой строки текста: кнопка выше строки, отрицательные поля не раздвигают ряд */
+  .signal-row__menu {
+    margin-block: calc((var(--line-body) - var(--size-control)) / 2);
   }
 
   .signal-row__action,

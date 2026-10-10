@@ -52,7 +52,7 @@
       student: data.student,
       classes,
       lessons: data.lessons,
-      signals: data.signals,
+      signals: data.signals.map((s) => (data.signalOverrides && data.signalOverrides[s.id] ? Object.assign({}, s, data.signalOverrides[s.id]) : s)),
       stats: data.stats,
       activity: data.activity,
       timezones: data.timezones,
@@ -60,8 +60,10 @@
       // Состояние интерфейса
       signalsExpanded: expanded,
       reminded: {},   // напоминание отправлено: метка вместо кнопки
-      settled: {},    // обработанный сигнал уже переставлен в конец списка
-      collapsing: {}, // строка складывается на месте перед тем, как уйти под «Показать ещё»
+      settled: {},    // обработанный сигнал переехал в группу «Ждут ответа»
+      collapsing: {}, // строка складывается на месте перед переездом
+      removed: {},    // скрыт или причина устранена из «⋯»: на месте строки подпись и «Отменить»
+      gone: {},       // после ухода со страницы скрытые сигналы больше не показываются
       activityStatus: data.failures.activity > 0 ? 'error' : 'ok',
       note: {
         goal: data.note.goal,
