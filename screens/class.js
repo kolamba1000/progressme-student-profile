@@ -1,7 +1,9 @@
 // Экран «Класс»: ряд классов как переключатель, шапка выбранного класса и расписание недели.
 // Десктоп и планшет — сетка недели (на планшете в событии только время), телефон — список уроков по дням.
-// Сетка показывает только часы, в которые у ученика бывают уроки (D-79): окно считается по всем урокам
-// всех его классов с запасом по часу с обеих сторон, не короче шести строк; ссылка «Показать весь день»
+// Сетка показывает только часы, в которые у ученика бывают уроки (D-79): окно считается по урокам
+// показанной недели во всех его классах с запасом по часу с обеих сторон, не короче шести строк.
+// У типичного ученика слоты постоянные, и сетка от недели к неделе не меняется; на отклонении она
+// подстраивается. Пустая неделя берёт окно по всем урокам ученика. Ссылка «Показать весь день»
 // раскрывает 8:00–22:00.
 
 window.ScreenClass = (function () {
@@ -39,21 +41,12 @@ window.ScreenClass = (function () {
       weekStart() { return F.weekStart(this.st.now, this.schedule.offset) + this.schedule.weekShift * 7 * F.DAY; },
       weekLabel() { return F.weekLabel(this.weekStart, this.schedule.offset); },
       lessons() { return this.st.lessons.filter((l) => l.classId === this.classId); },
-      // Окно часов сетки: по всем урокам ученика (все классы, прошлые и будущие), чтобы при смене класса
-      // и листании недель сетка не прыгала. Нет уроков — окно по умолчанию
+      // Окно часов сетки: по урокам показанной недели во всех классах ученика; пустая неделя — по всем
+      // его урокам, чтобы на каникулах сетка не прыгала на значение по умолчанию; нет уроков — 9:00–18:00
       lessonWindow() {
-        const offset = this.schedule.offset;
-        let start = Infinity;
-        let end = -Infinity;
-        this.st.lessons.forEach((l) => {
-          const p = F.parts(F.parse(l.start), offset);
-          start = Math.min(start, p.hours);
-          end = Math.max(end, Math.ceil((p.hours * 60 + p.minutes + l.minutes) / 60));
-        });
-        if (start === Infinity) return DEFAULT_WINDOW;
-        start = Math.max(0, start - 1);
-        end = Math.min(24, Math.max(end + 1, start + MIN_ROWS));
-        return { start, end };
+        const weekEnd = this.weekStart + 7 * F.DAY;
+        const inWeek = this.st.lessons.filter((l) => { const ms = F.parse(l.start); return ms >= this.weekStart && ms < weekEnd; });
+        return this.windowOf(inWeek.length ? inWeek : this.st.lessons);
       },
       // «Весь день» — 8:00–22:00, расширенные до окна уроков: урок в 7:00 не должен выпасть из полной сетки
       hourWindow() {
@@ -76,6 +69,20 @@ window.ScreenClass = (function () {
         this.clockNow = demoDayStart + (Date.now() - realDayStart);
       },
       shiftWeek(weeks) { this.schedule.weekShift += weeks; },
+      windowOf(lessons) {
+        const offset = this.schedule.offset;
+        let start = Infinity;
+        let end = -Infinity;
+        lessons.forEach((l) => {
+          const p = F.parts(F.parse(l.start), offset);
+          start = Math.min(start, p.hours);
+          end = Math.max(end, Math.ceil((p.hours * 60 + p.minutes + l.minutes) / 60));
+        });
+        if (start === Infinity) return DEFAULT_WINDOW;
+        start = Math.max(0, start - 1);
+        end = Math.min(24, Math.max(end + 1, start + MIN_ROWS));
+        return { start, end };
+      },
       toggleFullDay() { this.schedule.fullDay = !this.schedule.fullDay; },
       titleOf() { return this.cls.name; },
     },
