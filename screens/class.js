@@ -14,6 +14,27 @@ window.ScreenClass = (function () {
   const DEFAULT_WINDOW = { start: 9, end: 18 };
   const MIN_ROWS = 6;
 
+  // Кривая --motion-ease (cubic-bezier(0.2, 0, 0, 1)) для прокрутки, идущей вместе с CSS-переходом сетки
+  function easeOut(t) {
+    const x1 = 0.2, y1 = 0, x2 = 0, y2 = 1;
+    const bx = (u) => 3 * x1 * u * (1 - u) * (1 - u) + 3 * x2 * u * u * (1 - u) + u * u * u;
+    const by = (u) => 3 * y1 * u * (1 - u) * (1 - u) + 3 * y2 * u * u * (1 - u) + u * u * u;
+    let lo = 0, hi = 1, u = t;
+    for (let i = 0; i < 20; i++) { u = (lo + hi) / 2; if (bx(u) < t) lo = u; else hi = u; }
+    return by(u);
+  }
+  function animateScroll(to, ms) {
+    const from = window.scrollY;
+    if (ms <= 0 || Math.abs(to - from) < 1) { window.scrollTo(0, to); return; }
+    const t0 = performance.now();
+    const step = (now) => {
+      const t = Math.min(1, (now - t0) / ms);
+      window.scrollTo(0, from + (to - from) * easeOut(t));
+      if (t < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
   return {
     props: {
       state: { type: Object, required: true },
@@ -85,28 +106,33 @@ window.ScreenClass = (function () {
         end = Math.min(24, Math.max(end + 1, start + MIN_ROWS));
         return { start, end };
       },
-      // «Показать весь день» подводит страницу к урокам недели, если они есть и ушли с экрана:
-      // сетка разворачивается вверх, и уроки уезжают вниз на высоту добавленных часов. Прокрутка
-      // начинается после разворачивания, чтобы не ехать за движущейся сеткой
+      // «Показать весь день» подводит страницу к урокам недели, если они есть и уйдут с экрана:
+      // сетка разворачивается вверх, и уроки уезжают вниз на высоту добавленных часов. Конечное место
+      // урока считается заранее, и прокрутка идёт одновременно с разворачиванием, с той же длительностью
+      // и кривой, чтобы это было одно движение
       toggleFullDay() {
         this.schedule.fullDay = !this.schedule.fullDay;
         if (!this.schedule.fullDay) return;
         this.$nextTick(() => {
           const event = this.$el.querySelector('.schedule-event--grid');
           const viewport = this.$el.querySelector('.schedule-week__viewport');
-          if (!event || !viewport) return;
+          const body = this.$el.querySelector('.schedule-week__grid-body');
+          const cell = this.$el.querySelector('.schedule-hour-cell');
+          if (!event || !viewport || !body || !cell) return;
+          const hourPx = cell.getBoundingClientRect().height;
+          const translateNow = new DOMMatrix(getComputedStyle(body).transform).m42;
+          const translateFinal = (this.fullWindow.start - this.viewWindow.start) * hourPx;
+          const heightFinal = (this.viewWindow.end - this.viewWindow.start) * hourPx;
+          const r = event.getBoundingClientRect();
+          const finalTop = r.top + window.scrollY + (translateFinal - translateNow);
+          const docHeightFinal = document.documentElement.scrollHeight + (heightFinal - viewport.getBoundingClientRect().height);
+          const maxScroll = Math.max(0, docHeightFinal - window.innerHeight);
+          const fitsNow = finalTop - window.scrollY >= 0 && finalTop + r.height - window.scrollY <= window.innerHeight;
+          if (fitsNow) return;
+          const target = Math.min(maxScroll, Math.max(0, finalTop - (window.innerHeight - r.height) / 2));
           const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-          let done = false;
-          const scroll = () => {
-            if (done) return;
-            done = true;
-            const r = event.getBoundingClientRect();
-            if (r.top >= 0 && r.bottom <= window.innerHeight) return;
-            event.scrollIntoView({ block: 'center', behavior: reduced ? 'auto' : 'smooth' });
-          };
-          if (reduced) { scroll(); return; }
-          viewport.addEventListener('transitionend', scroll, { once: true });
-          setTimeout(scroll, 400);
+          const ms = reduced ? 0 : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-slow')) || 250;
+          animateScroll(target, ms);
         });
       },
       titleOf() { return this.cls.name; },
