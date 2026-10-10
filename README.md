@@ -17,7 +17,7 @@ python -m http.server 8080
 и перейдите на `http://localhost:8080/`. Список экранов и состояний на `index.html`, сами экраны
 на `profile.html` с адресами `#/overview` и `#/class/<id класса>`; параметр `?scenario=` выбирает состояние.
 
-Опубликованная версия: см. `docs/build.md` в корне проекта.
+Опубликованная версия: https://kolamba1000.github.io/progressme-student-profile/
 
 ## Структура
 
