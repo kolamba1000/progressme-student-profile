@@ -514,13 +514,21 @@
       viewStart: Number,
       viewEnd: Number,
     },
+    // Высота часа читается из токена --layout-hour один раз: высота окна и сдвиг сетки задаются в пикселях,
+    // а не через calc(var()) — WebKit (Safari на iPad и iPhone) не применяет переменную внутри calc в transform,
+    // и сетка оставалась на 8:00 при окне в шесть строк
+    data() { return { hourPx: 48 }; },
+    mounted() {
+      const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--layout-hour'));
+      if (v > 0) this.hourPx = v;
+    },
     computed: {
       hours() { return Array.from({ length: this.hourEnd - this.hourStart }, (_, i) => this.hourStart + i); },
       view() {
         return { start: this.viewStart == null ? this.hourStart : this.viewStart, end: this.viewEnd == null ? this.hourEnd : this.viewEnd };
       },
-      viewportStyle() { return { height: 'calc(var(--layout-hour) * ' + (this.view.end - this.view.start) + ')' }; },
-      bodyStyle() { return { transform: 'translateY(calc(var(--layout-hour) * ' + (this.hourStart - this.view.start) + '))' }; },
+      viewportStyle() { return { height: (this.view.end - this.view.start) * this.hourPx + 'px' }; },
+      bodyStyle() { return { transform: 'translateY(' + (this.hourStart - this.view.start) * this.hourPx + 'px)' }; },
       isHidden() { return (h) => h < this.view.start || h >= this.view.end; },
       days() {
         return Array.from({ length: 7 }, (_, i) => {
