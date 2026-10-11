@@ -1139,6 +1139,7 @@
   border-left: 3px solid var(--accent-default);
 }
 
+.schedule-event--planned .schedule-event__title,
 .schedule-event--planned .schedule-event__status { color: var(--accent-text); }
 
 .schedule-event--done {
@@ -1151,12 +1152,14 @@
   background: var(--status-danger-bg);
 }
 
+.schedule-event--missed .schedule-event__title,
 .schedule-event--missed .schedule-event__status { color: var(--status-danger-text); }
 
 .schedule-event--unpaid {
   background: var(--status-warning-bg);
 }
 
+.schedule-event--unpaid .schedule-event__title,
 .schedule-event--unpaid .schedule-event__status { color: var(--status-warning-text); }
 
 .schedule-event__title {
@@ -1181,10 +1184,11 @@
   padding: var(--space-8) var(--space-12);
 }
 
-/* Планшет: колонки узкие, в событии только время начала и иконка статуса. Название не возвращается
-   даже в длинном уроке: в колонке 97 px от «English Individual» остаётся «English I…», а полное имя
-   уже в заголовке карточки. У урока дольше часа (`--long`) содержимое прижато к верху, к началу урока,
-   как в Google Calendar и Apple Calendar, а не висит посередине блока */
+/* Планшет: колонки узкие (внутри события 63–72 px). У запланированного и проведённого урока время начала
+   и иконка статуса, подпись скрыта визуально и остаётся для скринридера: «Запланирован» не помещается.
+   У неявки и неоплаченного (`--problem`) наоборот: подпись статуса в одну-две строки («Нет / оплаты»),
+   время скрыто визуально, его показывает строка часа в сетке. Отличать на планшете нужно именно проблемы.
+   У урока дольше часа (`--long`) содержимое прижато к верху, к началу урока, как в Google Calendar и Apple Calendar */
 @media (min-width: 768px) and (max-width: 1199px) {
   .schedule-event--grid {
     justify-content: center;
@@ -1192,9 +1196,23 @@
     padding-right: var(--space-4);
   }
 
-  .schedule-event--grid .schedule-event__title,
   .schedule-event--grid .schedule-event__end {
     display: none;
+  }
+
+  .schedule-event--grid:not(.schedule-event--problem) .schedule-event__title,
+  .schedule-event--grid.schedule-event--problem .schedule-event__status {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .schedule-event--grid.schedule-event--problem .schedule-event__title {
+    white-space: normal;
+    text-overflow: clip;
   }
 
   .schedule-event--grid.schedule-event--long {

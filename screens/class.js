@@ -135,7 +135,6 @@ window.ScreenClass = (function () {
           animateScroll(target, ms);
         });
       },
-      titleOf() { return this.cls.name; },
     },
     template: `<div class="class-screen">
       <nav class="class-row" aria-label="Классы ученика">
@@ -156,11 +155,11 @@ window.ScreenClass = (function () {
         </div>
         <template v-if="!isMobile">
           <pm-schedule-week class="card-schedule__week" :lessons="lessons" :week-start="weekStart" :now="clockNow" :offset="schedule.offset"
-            :hour-start="fullWindow.start" :hour-end="fullWindow.end" :view-start="viewWindow.start" :view-end="viewWindow.end" :title-of="titleOf"></pm-schedule-week>
+            :hour-start="fullWindow.start" :hour-end="fullWindow.end" :view-start="viewWindow.start" :view-end="viewWindow.end"></pm-schedule-week>
           <pm-link class="card-schedule__hours-toggle" tone="muted" :icon-right="schedule.fullDay ? 'chevron-up' : 'chevron-down'"
             :aria-expanded="schedule.fullDay" @click="toggleFullDay">{{ hoursToggleLabel }}</pm-link>
         </template>
-        <pm-schedule-day-list v-else class="card-schedule__list" :lessons="lessons" :week-start="weekStart" :now="clockNow" :offset="schedule.offset" :title-of="titleOf"></pm-schedule-day-list>
+        <pm-schedule-day-list v-else class="card-schedule__list" :lessons="lessons" :week-start="weekStart" :now="clockNow" :offset="schedule.offset"></pm-schedule-day-list>
       </pm-card>
     </div>`,
   };

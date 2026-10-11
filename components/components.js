@@ -23,11 +23,13 @@
     [{ id: 'settings', icon: 'settings', label: 'Настройки' }],
   ];
 
+  // Подпись статуса стоит в событии вместо имени класса: расписание одного класса, имя уже в шапке карточки.
+  // problem — статусы, которые требуют внимания: на планшете подпись видна только у них
   const LESSON_STATUS = {
     planned: { icon: 'clock', label: 'Запланирован' },
     done: { icon: 'check', label: 'Проведён' },
-    missed: { icon: 'x', label: 'Неявка' },
-    unpaid: { icon: 'wallet', label: 'Нет оплаты' },
+    missed: { icon: 'x', label: 'Неявка', problem: true },
+    unpaid: { icon: 'wallet', label: 'Нет оплаты', problem: true },
   };
 
   const components = {};
@@ -527,7 +529,6 @@
   components['pm-schedule-event'] = {
     props: {
       lesson: { type: Object, required: true },
-      title: { type: String, required: true },
       offset: { type: Number, required: true },
       layout: { type: String, default: 'grid' },
       hourStart: { type: Number, default: 8 }, // первый час сетки: от него считается top события
@@ -549,12 +550,11 @@
         };
       },
     },
-    template: `<div class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout, { 'schedule-event--long': lesson.minutes > 60 }]" :style="style">
-      <span class="schedule-event__title small-strong">{{ title }}</span>
+    template: `<div class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout, { 'schedule-event--long': lesson.minutes > 60, 'schedule-event--problem': status.problem }]" :style="style">
+      <span class="schedule-event__title small-strong">{{ status.label }}</span>
       <span class="schedule-event__status small">
         <pm-icon :name="status.icon" size="s"></pm-icon>
         <span class="schedule-event__time">{{ startTime }}<span class="schedule-event__end">–{{ endTime }}</span></span>
-        <span class="visually-hidden">, {{ status.label }}</span>
       </span>
     </div>`,
   };
@@ -576,7 +576,6 @@
       weekStart: { type: Number, required: true },
       now: { type: Number, required: true },
       offset: { type: Number, required: true },
-      titleOf: { type: Function, required: true },
       hourStart: { type: Number, default: 8 },
       hourEnd: { type: Number, default: 23 },
       viewStart: Number,
@@ -629,7 +628,7 @@
         </div>
         <div v-for="d in days" :key="d.start" class="schedule-day-column" :class="{ 'schedule-day-column--today': d.today }">
           <span v-for="h in hours" :key="h" class="schedule-hour-cell"></span>
-          <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :title="titleOf(l)" :offset="offset" :hour-start="hourStart"></pm-schedule-event>
+          <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :offset="offset" :hour-start="hourStart"></pm-schedule-event>
           <pm-now-indicator v-if="d.today && nowTop" :top="nowTop"></pm-now-indicator>
         </div>
       </div>
@@ -644,7 +643,6 @@
       weekStart: { type: Number, required: true },
       now: { type: Number, required: true },
       offset: { type: Number, required: true },
-      titleOf: { type: Function, required: true },
     },
     computed: {
       days() {
@@ -664,7 +662,7 @@
       <p v-if="!days.length" class="schedule-day-list__empty body text-secondary">На этой неделе уроков нет</p>
       <div v-for="d in days" :key="d.start" class="schedule-day-list__day">
         <pm-day-header :label="d.label" :today="d.today"></pm-day-header>
-        <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :title="titleOf(l)" :offset="offset" layout="list"></pm-schedule-event>
+        <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :offset="offset" layout="list"></pm-schedule-event>
       </div>
     </div>`,
   };
