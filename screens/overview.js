@@ -86,7 +86,7 @@ window.ScreenOverview = (function () {
         return this.st.waitingExpanded && this.removedWaiting.length ? 'removed-summary' : null;
       },
       allClearCaption() {
-        return this.st.isNew ? F.typo('Сигналы появятся после первого урока') : F.typo('Сейчас ничего не требует действий');
+        return this.st.isNew ? F.typo('Сигналы появятся после первого урока') : 'Сейчас ничего';
       },
 
       // Следующий урок
