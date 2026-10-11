@@ -43,7 +43,7 @@ window.ScreenClass = (function () {
     },
     emits: ['out-of-scope'],
     data() {
-      return { mobileQuery: window.matchMedia('(max-width: 767px)'), isMobile: false, clockNow: 0, clockTimer: null };
+      return { mobileQuery: window.matchMedia('(max-width: 767.98px)'), isMobile: false, clockNow: 0, clockTimer: null };
     },
     created() {
       this.isMobile = this.mobileQuery.matches;

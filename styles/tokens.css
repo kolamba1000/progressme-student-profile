@@ -145,7 +145,7 @@
 }
 
 /* Режим Layout = tablet: 768–1199 */
-@media (max-width: 1199px) {
+@media (max-width: 1199.98px) {
   :root {
     --size-control: 44px;
     --space-card: 20px;
@@ -154,7 +154,7 @@
 }
 
 /* Режим Layout = mobile: до 767 */
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   :root {
     --space-card: 16px;
     --layout-page-padding: 16px;

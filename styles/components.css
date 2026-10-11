@@ -695,7 +695,7 @@
 
 /* size=narrow: кнопка под текстом, «⋯» справа от первой строки текста.
    Ниже 1280 колонка сигналов слишком узка для строки «текст + кнопка» */
-@media (max-width: 1279px) {
+@media (max-width: 1279.98px) {
   .signal-row {
     grid-template-columns: auto minmax(0, 1fr) auto;
     grid-template-areas:
@@ -1189,7 +1189,7 @@
    У неявки и неоплаченного (`--problem`) наоборот: подпись статуса в одну-две строки («Нет / оплаты»),
    время скрыто визуально, его показывает строка часа в сетке. Отличать на планшете нужно именно проблемы.
    У урока дольше часа (`--long`) содержимое прижато к верху, к началу урока, как в Google Calendar и Apple Calendar */
-@media (min-width: 768px) and (max-width: 1199px) {
+@media (min-width: 768px) and (max-width: 1199.98px) {
   .schedule-event--grid {
     justify-content: center;
     padding-left: var(--space-4);
@@ -1352,7 +1352,7 @@
 }
 
 /* --- Планшет и телефон: зона нажатия у текстовых ссылок 44 без изменения визуала (D-71) --- */
-@media (max-width: 1199px) {
+@media (max-width: 1199.98px) {
   .link {
     padding: calc((var(--size-touch) - var(--line-body)) / 2) 0;
     margin: calc((var(--line-body) - var(--size-touch)) / 2) 0;
@@ -1371,7 +1371,7 @@
 }
 
 /* --- Телефон -------------------------------------------------------------- */
-@media (max-width: 767px) {
+@media (max-width: 767.98px) {
   .logo__svg {
     width: var(--size-logo-s-width);
     height: var(--size-logo-s-height);
