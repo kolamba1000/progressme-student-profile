@@ -127,9 +127,10 @@ window.ScreenClass = (function () {
           const finalTop = r.top + window.scrollY + (translateFinal - translateNow);
           const docHeightFinal = document.documentElement.scrollHeight + (heightFinal - viewport.getBoundingClientRect().height);
           const maxScroll = Math.max(0, docHeightFinal - window.innerHeight);
-          const fitsNow = finalTop - window.scrollY >= 0 && finalTop + r.height - window.scrollY <= window.innerHeight;
+          const headerPx = document.querySelector('.header').getBoundingClientRect().height;
+          const fitsNow = finalTop - window.scrollY >= headerPx && finalTop + r.height - window.scrollY <= window.innerHeight;
           if (fitsNow) return;
-          const target = Math.min(maxScroll, Math.max(0, finalTop - (window.innerHeight - r.height) / 2));
+          const target = Math.min(maxScroll, Math.max(0, finalTop - headerPx - (window.innerHeight - headerPx - r.height) / 2));
           const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
           const ms = reduced ? 0 : parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--motion-slow')) || 250;
           animateScroll(target, ms);

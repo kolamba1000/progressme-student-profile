@@ -13,8 +13,15 @@
   flex: 1;
 }
 
+/* Шапка и сайдбар закреплены при прокрутке (D-82): шапка — sticky в .header, сайдбар — колонка высотой с окно под шапкой */
 .app__sidebar {
+  position: sticky;
+  top: var(--layout-header);
   flex: none;
+  align-self: flex-start;
+  height: calc(100vh - var(--layout-header));
+  height: calc(100dvh - var(--layout-header));
+  overflow-y: auto;
 }
 
 .app__content {

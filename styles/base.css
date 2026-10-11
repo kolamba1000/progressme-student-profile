@@ -8,6 +8,8 @@
 
 html {
   -webkit-text-size-adjust: 100%;
+  /* Закреплённая шапка не закрывает элемент, к которому прокручивает фокус с клавиатуры */
+  scroll-padding-top: calc(var(--layout-header) + var(--space-16));
 }
 
 body {
