@@ -525,7 +525,9 @@
     </div>`,
   };
 
+  // Урок — кнопка: по нажатию в продукте открылась бы карточка урока, в демо это экран вне объёма
   components['pm-schedule-event'] = {
+    emits: ['out-of-scope'],
     props: {
       lesson: { type: Object, required: true },
       offset: { type: Number, required: true },
@@ -552,13 +554,13 @@
         };
       },
     },
-    template: `<div class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout, { 'schedule-event--long': lesson.minutes > 60, 'schedule-event--multiword': words.length > 1 }]" :style="style">
+    template: `<button type="button" class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout, { 'schedule-event--long': lesson.minutes > 60, 'schedule-event--multiword': words.length > 1 }]" :style="style" @click="$emit('out-of-scope')">
       <span class="schedule-event__title small-strong"><template v-for="(word, i) in words" :key="i">{{ i ? ' ' : '' }}<span class="schedule-event__word">{{ word }}</span></template></span>
       <span class="schedule-event__status small">
         <pm-icon :name="status.icon" size="s"></pm-icon>
         <span class="schedule-event__time">{{ startTime }}<span class="schedule-event__end">–{{ endTime }}</span></span>
       </span>
-    </div>`,
+    </button>`,
   };
 
   components['pm-now-indicator'] = {
@@ -573,6 +575,7 @@
   // а показывается через окно viewStart–viewEnd: высота окна и сдвиг сетки анимируются CSS-переходом,
   // поэтому «Показать весь день» и смена окна при листании недель разворачивают сетку, а не перерисовывают
   components['pm-schedule-week'] = {
+    emits: ['out-of-scope'],
     props: {
       lessons: { type: Array, required: true },
       weekStart: { type: Number, required: true },
@@ -630,7 +633,7 @@
         </div>
         <div v-for="d in days" :key="d.start" class="schedule-day-column" :class="{ 'schedule-day-column--today': d.today }">
           <span v-for="h in hours" :key="h" class="schedule-hour-cell"></span>
-          <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :offset="offset" :hour-start="hourStart"></pm-schedule-event>
+          <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :offset="offset" :hour-start="hourStart" @out-of-scope="$emit('out-of-scope')"></pm-schedule-event>
           <pm-now-indicator v-if="d.today && nowTop" :top="nowTop"></pm-now-indicator>
         </div>
       </div>
@@ -640,6 +643,7 @@
 
   // Телефон: вместо сетки список уроков по дням (аннотация «Общее · адаптивы» на кадре 04).
   components['pm-schedule-day-list'] = {
+    emits: ['out-of-scope'],
     props: {
       lessons: { type: Array, required: true },
       weekStart: { type: Number, required: true },
@@ -664,7 +668,7 @@
       <p v-if="!days.length" class="schedule-day-list__empty body text-secondary">На этой неделе уроков нет</p>
       <div v-for="d in days" :key="d.start" class="schedule-day-list__day">
         <pm-day-header :label="d.label" :today="d.today"></pm-day-header>
-        <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :offset="offset" layout="list"></pm-schedule-event>
+        <pm-schedule-event v-for="l in d.lessons" :key="l.start" :lesson="l" :offset="offset" layout="list" @out-of-scope="$emit('out-of-scope')"></pm-schedule-event>
       </div>
     </div>`,
   };
