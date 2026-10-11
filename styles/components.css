@@ -1188,24 +1188,19 @@
   padding: var(--space-8) var(--space-12);
 }
 
-/* Планшет: колонки узкие (внутри события 63–72 px). У запланированного и проведённого урока время начала
-   и иконка статуса, подпись скрыта визуально и остаётся для скринридера: «Запланирован» не помещается.
-   У неявки и неоплаченного (`--problem`) наоборот: подпись статуса в одну-две строки («Нет / оплаты»),
-   время скрыто визуально, его показывает строка часа в сетке. Отличать на планшете нужно именно проблемы.
-   У урока дольше часа (`--long`) содержимое прижато к верху, к началу урока, как в Google Calendar и Apple Calendar */
+/* Планшет: колонки узкие (внутри события 63–72 px). У всех статусов видно только слово («Назначен», «Проведён»,
+   «Неявка», «Нет / оплаты» в две строки), время скрыто визуально и остаётся для скринридера: его показывает
+   строка часа в сетке (D-84). У урока дольше часа (`--long`) содержимое прижато к верху, к началу урока,
+   как в Google Calendar и Apple Calendar */
 @media (min-width: 768px) and (max-width: 1199.98px) {
+  /* Боковые поля 2: на 768 «Проведён» и «Назначен» с полями 4 не помещались на 2–3 px */
   .schedule-event--grid {
     justify-content: center;
-    padding-left: var(--space-4);
-    padding-right: var(--space-4);
+    padding-left: var(--space-2);
+    padding-right: var(--space-2);
   }
 
-  .schedule-event--grid .schedule-event__end {
-    display: none;
-  }
-
-  .schedule-event--grid:not(.schedule-event--problem) .schedule-event__title,
-  .schedule-event--grid.schedule-event--problem .schedule-event__status {
+  .schedule-event--grid .schedule-event__status {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -1214,7 +1209,7 @@
     white-space: nowrap;
   }
 
-  .schedule-event--grid.schedule-event--problem .schedule-event__title {
+  .schedule-event--grid .schedule-event__title {
     white-space: normal;
     text-overflow: clip;
   }

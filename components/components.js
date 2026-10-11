@@ -23,13 +23,12 @@
     [{ id: 'settings', icon: 'settings', label: 'Настройки' }],
   ];
 
-  // Подпись статуса стоит в событии вместо имени класса: расписание одного класса, имя уже в шапке карточки.
-  // problem — статусы, которые требуют внимания: на планшете подпись видна только у них
+  // Подпись статуса стоит в событии вместо имени класса: расписание одного класса, имя уже в шапке карточки
   const LESSON_STATUS = {
-    planned: { icon: 'clock', label: 'Запланирован' },
+    planned: { icon: 'clock', label: 'Назначен' },
     done: { icon: 'check', label: 'Проведён' },
-    missed: { icon: 'x', label: 'Неявка', problem: true },
-    unpaid: { icon: 'wallet', label: 'Нет оплаты', problem: true },
+    missed: { icon: 'x', label: 'Неявка' },
+    unpaid: { icon: 'wallet', label: 'Нет оплаты' },
   };
 
   const components = {};
@@ -550,7 +549,7 @@
         };
       },
     },
-    template: `<div class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout, { 'schedule-event--long': lesson.minutes > 60, 'schedule-event--problem': status.problem }]" :style="style">
+    template: `<div class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout, { 'schedule-event--long': lesson.minutes > 60 }]" :style="style">
       <span class="schedule-event__title small-strong">{{ status.label }}</span>
       <span class="schedule-event__status small">
         <pm-icon :name="status.icon" size="s"></pm-icon>
