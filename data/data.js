@@ -129,7 +129,7 @@ window.DATA = {
     // Напоминание об оплате отправлено 3 дня назад, оплаты нет: сигнал вернулся первым с цветом (кадр 01f, D-80)
     'no-answer': {
       title: 'Ответа нет 3 дня',
-      signalOverrides: { payment: { text: 'Напомнили 3 дня назад, оплаты нет', action: { label: 'Напомнить ещё раз', kind: 'remind' } } },
+      signalOverrides: { payment: { text: 'Оплаты нет 3 дня после напоминания', action: { label: 'Напомнить ещё раз', kind: 'remind' } } },
     },
     'lesson-soon': {
       title: 'Урок скоро',

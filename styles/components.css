@@ -563,6 +563,15 @@
   padding-bottom: 0;
 }
 
+/* Последняя видимая строка, если за ней в разметке только свёрнутые: без линии и нижнего отступа, как :last-child */
+.list__item--end {
+  border-bottom: 0;
+}
+
+.list__item--end > .list__item-inner {
+  padding-bottom: 0;
+}
+
 .list__item--collapsed {
   grid-template-rows: 0fr;
   border-bottom-width: 0;

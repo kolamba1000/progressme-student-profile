@@ -69,7 +69,22 @@ window.ScreenOverview = (function () {
       waitingSummary() { return this.summaryOf(this.removedWaiting, 'waiting'); },
       hiddenCount() { return this.shownSignals.length - VISIBLE_SIGNALS; },
       attentionTitle() { return F.typo('Требует внимания · ' + this.activeCount); },
-      waitingTitle() { return F.typo('Ждут ответа · ' + this.waitingSignals.length); },
+      // Скрытые из группы не считаются; пока их можно вернуть, группа остаётся, но без числа
+      waitingCount() { return this.waitingSignals.filter((s) => !this.st.removed[s.id]).length; },
+      waitingTitle() { return this.waitingCount ? F.typo('Ждут ответа · ' + this.waitingCount) : 'Ждут ответа'; },
+      // Последняя видимая строка списка: свёрнутые строки остаются в разметке, поэтому :last-child
+      // не всегда видимый, и под последней видимой строкой оставалась линия
+      mainEndKey() {
+        if (this.signalsCollapsible) return 'footer';
+        const open = this.signals.filter((s) => !this.isCollapsed(s));
+        if (open.length) return open[open.length - 1].id;
+        return this.removedMain.length ? 'removed-summary' : null;
+      },
+      waitingEndKey() {
+        const open = this.waitingSignals.filter((s) => !this.isWaitingCollapsed(s));
+        if (open.length) return open[open.length - 1].id;
+        return this.st.waitingExpanded && this.removedWaiting.length ? 'removed-summary' : null;
+      },
       allClearCaption() {
         return this.st.isNew ? F.typo('Сигналы появятся после первого урока') : F.typo('Сейчас ничего не требует действий');
       },
@@ -196,13 +211,13 @@ window.ScreenOverview = (function () {
             <pm-card-header v-if="activeCount" :title="attentionTitle"></pm-card-header>
             <pm-all-clear-row v-else title="Требует внимания" :caption="allClearCaption"></pm-all-clear-row>
             <transition-group v-if="signals.length" name="list" tag="ul" class="list">
-              <li key="removed-summary" class="list__item list__item--collapsible" :class="{ 'list__item--collapsed': !removedMain.length }" :inert="!removedMain.length">
+              <li key="removed-summary" class="list__item list__item--collapsible" :class="{ 'list__item--collapsed': !removedMain.length, 'list__item--end': mainEndKey === 'removed-summary' }" :inert="!removedMain.length">
                 <div class="list__item-inner">
                   <pm-hidden-signal-row :text="mainSummary.text" :undo-label="mainSummary.undo" @undo="undoLast(removedMain)"></pm-hidden-signal-row>
                 </div>
               </li>
               <li v-for="s in signals" :key="s.id" class="list__item" :data-signal="s.id"
-                :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isCollapsed(s) }" :inert="isCollapsed(s)">
+                :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isCollapsed(s), 'list__item--end': mainEndKey === s.id }" :inert="isCollapsed(s)">
                 <div class="list__item-inner">
                   <pm-signal-row :signal="s" :tone="signalTone(s)" :class-label="classLabel(s.classId)" :reminded="!!st.reminded[s.id]"
                     :menu="menuOf(s)" @action="onSignalAction(s)" @menu="onSignalMenu(s, $event)"></pm-signal-row>
@@ -220,13 +235,13 @@ window.ScreenOverview = (function () {
                 :aria-expanded="st.waitingExpanded" @click="st.waitingExpanded = !st.waitingExpanded">{{ waitingTitle }}</pm-link>
               <transition-group name="fade" tag="ul" class="list">
                 <li key="removed-summary" class="list__item list__item--collapsible"
-                  :class="{ 'list__item--collapsed': !st.waitingExpanded || !removedWaiting.length }" :inert="!st.waitingExpanded || !removedWaiting.length">
+                  :class="{ 'list__item--collapsed': !st.waitingExpanded || !removedWaiting.length, 'list__item--end': waitingEndKey === 'removed-summary' }" :inert="!st.waitingExpanded || !removedWaiting.length">
                   <div class="list__item-inner">
                     <pm-hidden-signal-row :text="waitingSummary.text" :undo-label="waitingSummary.undo" @undo="undoLast(removedWaiting)"></pm-hidden-signal-row>
                   </div>
                 </li>
                 <li v-for="s in waitingSignals" :key="s.id" class="list__item" :data-signal="s.id"
-                  :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isWaitingCollapsed(s) }" :inert="isWaitingCollapsed(s)">
+                  :class="{ 'list__item--collapsible': true, 'list__item--collapsed': isWaitingCollapsed(s), 'list__item--end': waitingEndKey === s.id }" :inert="isWaitingCollapsed(s)">
                   <div class="list__item-inner">
                     <pm-signal-row :signal="s" tone="neutral" :class-label="classLabel(s.classId)" reminded
                       :menu="menuOf(s)" @menu="onSignalMenu(s, $event)"></pm-signal-row>
