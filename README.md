@@ -6,18 +6,8 @@
 Это демо дизайна, не продакшн: бэкенда нет, данные тестовые и вымышленные, действия меняют данные
 в памяти страницы, перезагрузка возвращает исходные.
 
-## Запуск
-
-Сборки нет. Откройте `index.html` двойным кликом или любым статическим сервером, например:
-
-```
-python -m http.server 8080
-```
-
-и перейдите на `http://localhost:8080/`. Список экранов и состояний на `index.html`, сами экраны
-на `profile.html` с адресами `#/overview` и `#/class/<id класса>`; параметр `?scenario=` выбирает состояние.
-
-Опубликованная версия: https://kolamba1000.github.io/progressme-student-profile/
+- Живая версия: https://kolamba1000.github.io/progressme-student-profile/
+- Макеты: https://www.figma.com/design/4SQeBxa2lSsP1ZVSeulx6o/
 
 ## Структура
 
@@ -42,12 +32,12 @@ vendor/                 Vue 3 (vue.global.prod.js) и шрифт Inter, лока
 
 ## Связь с Figma
 
-- Файл: https://www.figma.com/design/4SQeBxa2lSsP1ZVSeulx6o/ · страница `Design System` (компоненты, переменные, стили),
-  страница `Screens` (кадры 01–04 и состояния 01a–01d, 03a).
+- Страница `Design System` (компоненты, переменные, стили),
+  страница `Screens` (кадры 01–04 и состояния 01a–01h, 03a, 04a).
 - Переменные трёх коллекций Figma (`Primitives`, `Semantic`, `Layout`) лежат в `styles/tokens.css` с теми же именами.
   Режимы коллекции `Layout` (desktop / tablet / mobile) заданы медиазапросами: ниже 1200 `--size-control` 44 и `--space-card` 20,
   ниже 768 `--space-card` 16.
-- Компонент Figma `button` с свойствами `variant`, `icon` → `<pm-button variant="primary" icon="arrow-right">`.
+- Компонент Figma `button` со свойствами `variant`, `icon` → `<pm-button variant="primary" icon="arrow-right">`.
   Варианты размера и раскладки (`size=wide/narrow`, `layout=row/stacked`) в коде не пропсы, а медиазапросы:
   компонент перестраивается сам по ширине окна.
 - Стек: Vue 3 без сборки (шаблоны строками в `components.js`), никаких зависимостей кроме Vue, шрифта и иконок.
