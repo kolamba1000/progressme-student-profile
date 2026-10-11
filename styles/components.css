@@ -1188,19 +1188,21 @@
   padding: var(--space-8) var(--space-12);
 }
 
-/* Планшет: колонки узкие (внутри события 63–72 px). У всех статусов видно только слово («Назначен», «Проведён»,
+/* Планшет: колонки узкие (внутри события 63–72 px на 768–834). У всех статусов видно слово («Назначен», «Проведён»,
    «Неявка», «Нет / оплаты» в две строки), время скрыто визуально и остаётся для скринридера: его показывает
-   строка часа в сетке (D-84). У урока дольше часа (`--long`) содержимое прижато к верху, к началу урока,
-   как в Google Calendar и Apple Calendar */
+   строка часа в сетке (D-84); где в событии есть место, время начала видно (D-85, ниже).
+   У урока дольше часа (`--long`) содержимое прижато к верху, к началу урока, как в Google Calendar и Apple Calendar */
 @media (min-width: 768px) and (max-width: 1199.98px) {
   /* Боковые поля 2: на 768 «Проведён» и «Назначен» с полями 4 не помещались на 2–3 px */
   .schedule-event--grid {
+    container-type: size;
     justify-content: center;
     padding-left: var(--space-2);
     padding-right: var(--space-2);
   }
 
-  .schedule-event--grid .schedule-event__status {
+  .schedule-event--grid .schedule-event__status,
+  .schedule-event--grid .schedule-event__end {
     position: absolute;
     width: 1px;
     height: 1px;
@@ -1214,8 +1216,32 @@
     text-overflow: clip;
   }
 
+  /* Запаса по ширине на 768 почти нет («Проведён» 66 из 66 px): слово, которое не влезает, обрезается
+     многоточием, а не молча; полностью слово и время читает скринридер */
+  .schedule-event--grid .schedule-event__word {
+    display: inline-block;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: top;
+  }
+
   .schedule-event--grid.schedule-event--long {
     justify-content: flex-start;
+  }
+
+  /* Время начала возвращается, когда в событии есть место (D-85): колонка шире 90 px (планшет от ~1000 px,
+     слово при этом в одну строку) или урок дольше часа (высоты хватает на слово в две строки и время).
+     Если не хватает, слово важнее: время показывает строка часа. Конец урока остаётся для скринридера */
+  @container (min-width: 90px) or (min-height: 62px) {
+    .schedule-event--grid .schedule-event__status {
+      position: static;
+      width: auto;
+      height: auto;
+      overflow: visible;
+      clip: auto;
+    }
   }
 }
 

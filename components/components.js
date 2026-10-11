@@ -534,6 +534,9 @@
     },
     computed: {
       status() { return LESSON_STATUS[this.lesson.status]; },
+      // Слова подписи отдельными элементами: на планшете слово, которое не влезает в колонку, получает многоточие,
+      // а «Нет оплаты» по-прежнему переносится на две строки
+      words() { return this.status.label.split(' '); },
       startTime() { return F.time(F.parse(this.lesson.start), this.offset); },
       endTime() { return F.time(F.parse(this.lesson.start) + this.lesson.minutes * 60000, this.offset); },
       // Высота события из длительности: минуты / 60 × высота часа − 4, не меньше 44 (D-67)
@@ -550,7 +553,7 @@
       },
     },
     template: `<div class="schedule-event" :class="['schedule-event--' + lesson.status, 'schedule-event--' + layout, { 'schedule-event--long': lesson.minutes > 60 }]" :style="style">
-      <span class="schedule-event__title small-strong">{{ status.label }}</span>
+      <span class="schedule-event__title small-strong"><template v-for="(word, i) in words" :key="i">{{ i ? ' ' : '' }}<span class="schedule-event__word">{{ word }}</span></template></span>
       <span class="schedule-event__status small">
         <pm-icon :name="status.icon" size="s"></pm-icon>
         <span class="schedule-event__time">{{ startTime }}<span class="schedule-event__end">–{{ endTime }}</span></span>
