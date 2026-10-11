@@ -34,7 +34,8 @@
 
   // --- Состояние демо ---------------------------------------------------------
 
-  // Данные сценария поверх базовых: верхний уровень — замена, student — слияние полей.
+  // Данные сценария поверх базовых: верхний уровень — замена, student — слияние полей,
+  // classOverrides и signalOverrides — поля отдельных классов и сигналов.
   function buildState(scenarioKey, expanded) {
     const base = F.typoDeep(window.DATA);
     const scenario = base.scenarios[scenarioKey] || {};
@@ -42,7 +43,9 @@
       student: Object.assign({}, base.student, scenario.student || {}),
       failures: Object.assign({ activity: 0, noteSave: 0 }, scenario.failures || {}),
     });
-    const classes = data.classes.filter((c) => data.student.classes.includes(c.id));
+    const classes = data.classes
+      .filter((c) => data.student.classes.includes(c.id))
+      .map((c) => (data.classOverrides && data.classOverrides[c.id] ? Object.assign({}, c, data.classOverrides[c.id]) : c));
     return {
       scenario: scenarioKey,
       isNew: !!data.isNew,
